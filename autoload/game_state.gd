@@ -131,7 +131,7 @@ func new_run(chosen_equipment: String, p_hero_id: String = "thach_sanh", rng: Ra
 	hero_id = p_hero_id if CharacterDB.CHARACTERS.has(p_hero_id) else "thach_sanh"
 	var hdef: Dictionary = CharacterDB.CHARACTERS[hero_id]
 	deck.clear()
-	for id in CardDB.STARTER_DECK:
+	for id in CardDB.starter_deck_for_hero(hero_id):
 		deck.append(CardDB.make(id))
 	gold = 60
 	relics.clear()

@@ -33,9 +33,11 @@ const HERO_CX := 290.0
 class NoteEnergy extends Control:
 	var energy := 3
 	var max_energy := 3
+	var hero_id := "thach_sanh"  # v6.4: HBT uses war drums
 
-	func _init() -> void:
+	func _init(p_hero_id: String = "thach_sanh") -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hero_id = p_hero_id
 
 	func set_values(e: int, m: int) -> void:
 		energy = e
@@ -48,7 +50,24 @@ class NoteEnergy extends Control:
 			var cx := (float(i) + 0.5) * size.x / float(n)
 			var cy := size.y * 0.55
 			var lit: bool = i < energy
-			_note(Vector2(cx, cy), 18.0, lit)
+			if hero_id == "hai_ba_trung":
+				_drum(Vector2(cx, cy), 18.0, lit)
+			else:
+				_note(Vector2(cx, cy), 18.0, lit)
+
+	## War drum: fits Hai Ba Trung theme (Rai)
+	func _drum(c: Vector2, s: float, lit: bool) -> void:
+		var col := Color("c0392b") if lit else Color("6a5f4c")
+		var ink := UIH.INK
+		# drum body (rounded rect)
+		var r := Rect2(c - Vector2(s*0.6, s*0.4), Vector2(s*1.2, s*0.8))
+		draw_rect(r, col)
+		draw_rect(r, ink, false, 2.0)
+		# drum top (ellipse)
+		_draw_ellipse(c - Vector2(0, s*0.4), s*0.6, s*0.2, Color("e8dcc0") if lit else Color("8a7f72"), ink)
+		# drumsticks
+		draw_line(c + Vector2(-s*0.3, -s*0.6), c + Vector2(-s*0.1, -s*0.4), ink, 2.0)
+		draw_line(c + Vector2(s*0.3, -s*0.6), c + Vector2(s*0.1, -s*0.4), ink, 2.0)
 
 	## Musical note (quaver): fits Thach Sanh lute theme (Rai)
 	func _note(c: Vector2, s: float, lit: bool) -> void:
@@ -1056,7 +1075,7 @@ func _build_command_panel() -> void:
 	r1.add_theme_constant_override("separation", 10)
 	r1.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_child(r1)
-	_note_energy = NoteEnergy.new()
+	_note_energy = NoteEnergy.new(Game.hero_id)
 	_note_energy.custom_minimum_size = Vector2(100, 60)
 	_note_energy.size = Vector2(100, 60)
 	_note_energy.size_flags_vertical = Control.SIZE_SHRINK_CENTER

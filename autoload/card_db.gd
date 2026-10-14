@@ -282,6 +282,17 @@ const STARTER_DECK := [
 	"defend", "defend", "defend", "defend",
 	"grace_note", "take_breath",
 ]
+# v6.4: Hai Ba Trung starter (no chord cards)
+const STARTER_DECK_HBT := [
+	"strike", "strike", "strike", "strike",
+	"defend", "defend", "defend", "defend",
+	"spear_wall", "rice_provision",
+]
+
+static func starter_deck_for_hero(hero_id: String) -> Array:
+	if hero_id == "hai_ba_trung":
+		return STARTER_DECK_HBT.duplicate()
+	return STARTER_DECK.duplicate()
 
 const RARITY_WEIGHTS := {"common": 55, "uncommon": 28, "rare": 12, "mythic": 5}
 const PRICE_BY_RARITY := {"common": 50, "uncommon": 85, "rare": 150, "mythic": 300}
