@@ -22,6 +22,12 @@ func _init() -> void:
 	_define_steps()
 
 
+func _hero_intro_text() -> String:
+	if Game.hero_id == "hai_ba_trung":
+		return "You are HAI BA TRUNG, the warrior queen of Me Linh.\n\nLead your war elephant against the Han invaders.\nI'll guide you step by step.\n\n(Tap anywhere to continue)"
+	return "You are THACH SANH, the kind woodcutter of the Green Forest.\n\nDefeat the beasts and demons with your cards and your lute.\nI'll guide you step by step.\n\n(Tap anywhere to continue)"
+
+
 func _define_steps() -> void:
 	_steps = [
 		{
