@@ -1,0 +1,18 @@
+# Godot
+.godot/
+*.import.bak
+
+# Build outputs
+*.apk
+*.aab
+*.keystore
+
+# Temp
+tmp/
+*.tmp
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+build/
