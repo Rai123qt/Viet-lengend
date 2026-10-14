@@ -346,22 +346,28 @@ func get_tutorial_target_rect(target: String) -> Rect2:
 ## CHORD BOOK sits bottom-right above END TURN so the hand
 ## (which never passes x=1020) can never cover it.
 func _build_vessel_indicator() -> void:
-	# v3.7: the string sits just ABOVE the hand (hand moved down with
-	# TRAY_TOP=500, no room below). x=560 keeps it clear of the HP strips
-	# (hero ends x=400, enemy starts x=880); y=468 clears the cards (502+).
-	# z_index 6 so a lifted card never hides the chord progress.
-	# v3.8: widened for the note tracker (played notes + target name).
-	_chord_str = ChordString.new()
-	_chord_str.position = Vector2(480, 468)
-	_chord_str.size = Vector2(460, 30)
-	_chord_str.z_index = 6
-	add_child(_chord_str)
+	# v6.3: Hai Ba Trung doesn't use chords — skip the note tracker
+	if Game.hero_id == "hai_ba_trung":
+		_chord_str = null
+	else:
+		# v3.7: the string sits just ABOVE the hand (hand moved down with
+		# TRAY_TOP=500, no room below). x=560 keeps it clear of the HP strips
+		# (hero ends x=400, enemy starts x=880); y=468 clears the cards (502+).
+		# z_index 6 so a lifted card never hides the chord progress.
+		# v3.8: widened for the note tracker (played notes + target name).
+		_chord_str = ChordString.new()
+		_chord_str.position = Vector2(480, 468)
+		_chord_str.size = Vector2(460, 30)
+		_chord_str.z_index = 6
+		add_child(_chord_str)
 	# v3.7: moved down to y=506 — the lowered fighter chips now end at
 	# y=498, so the book sits just below the strip band, clear of cards.
-	_chordbook_btn = UIH.wood_btn("CHORD BOOK", 180, 60)
-	_chordbook_btn.position = Vector2(1042, 506)
-	_chordbook_btn.pressed.connect(_show_chord_book)
-	add_child(_chordbook_btn)
+	# v6.3: Hide CHORD BOOK for Hai Ba Trung
+	if Game.hero_id != "hai_ba_trung":
+		_chordbook_btn = UIH.wood_btn("CHORD BOOK", 180, 60)
+		_chordbook_btn.position = Vector2(1042, 506)
+		_chordbook_btn.pressed.connect(_show_chord_book)
+		add_child(_chordbook_btn)
 
 
 func _refresh_vessel() -> void:
