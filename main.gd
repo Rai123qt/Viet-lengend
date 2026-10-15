@@ -122,6 +122,10 @@ func show_hero_select() -> void:
 	_swap(HeroSelectScreen.new())
 
 
+func show_collection() -> void:
+	_swap(CollectionScreen.new())
+
+
 func show_equipment() -> void:
 	_swap(EquipmentScreen.new())
 

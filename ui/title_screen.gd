@@ -26,9 +26,14 @@ func _ready() -> void:
 	var nb := UIH.btn("NEW RUN", 260)
 	nb.custom_minimum_size = Vector2(260, 60)
 	nb.pressed.connect(func(): router.show_hero_select())
+	var cb := UIH.btn("COLLECTION", 260)
+	cb.custom_minimum_size = Vector2(260, 60)
+	cb.pressed.connect(func(): router.show_collection())
 	var hc := HBoxContainer.new()
 	hc.alignment = BoxContainer.ALIGNMENT_CENTER
+	hc.add_theme_constant_override("separation", 16)
 	hc.add_child(nb)
+	hc.add_child(cb)
 	vb.add_child(hc)
 	var hint := UIH.label("A turn-based deckbuilder roguelite.\nVietnamese folktales, Dong Ho folk art.", 15, UIH.LT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
