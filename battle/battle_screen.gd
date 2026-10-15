@@ -1171,34 +1171,39 @@ func _build_elephant_ui() -> void:
 		return
 	# v6.2: Use art texture for war elephant (facing right)
 	# v6.8: Moved IN FRONT of hero (tank position, was behind at HERO_CX-240)
+	# v6.8.5: Bigger (was 160x140, now 220x190) - war elephant must be bigger than human!
 	var etex := UIH.try_tex("res://assets/art/vl/elephant_war.png")
-	var ex := HERO_CX + 120.0  # in front, between hero and enemies
+	var ex := HERO_CX + 100.0  # in front, between hero and enemies
+	var ew := 220.0
+	var eh := 190.0
 	if etex != null:
 		var tr := TextureRect.new()
 		tr.texture = etex
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.custom_minimum_size = Vector2(160, 140)
-		tr.size = Vector2(160, 140)
+		tr.custom_minimum_size = Vector2(ew, eh)
+		tr.size = Vector2(ew, eh)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_elephant_sprite = tr
 	else:
 		_elephant_sprite = ElephantSprite.new()
-	_elephant_sprite.position = Vector2(ex, FEET_Y - 140)
+	_elephant_sprite.position = Vector2(ex, FEET_Y - eh)
 	add_child(_elephant_sprite)
-	# HP bar below elephant (red, with numbers)
-	_elephant_hpbar = UIH.hp_bar(140, 20)
-	_elephant_hpbar.position = Vector2(ex + 10, FEET_Y + 5)
-	add_child(_elephant_hpbar)
-	# HP number label
-	_elephant_hp_label = UIH.label("", 14, Color(1, 1, 1))
-	_elephant_hp_label.position = Vector2(ex + 10, FEET_Y + 28)
-	_elephant_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_elephant_hp_label)
+	# HP bar below elephant - use HpStrip like character (v6.8.5)
+	_elephant_hpbar = HpStrip.new()
+	var ehs := _elephant_hpbar as HpStrip
+	ehs.bar_w = 200.0
+	ehs.setup()
+	ehs.custom_minimum_size = Vector2(200, 32)
+	ehs.size = Vector2(200, 32)
+	ehs.position = Vector2(ex + 10, FEET_Y + 8)
+	ehs.z_index = 4
+	add_child(ehs)
 	# Name label
 	var ename := UIH.label("WAR ELEPHANT", 14, Color(0.95, 0.88, 0.70))
-	ename.position = Vector2(ex - 10, FEET_Y + 48)
+	ename.position = Vector2(ex + 10, FEET_Y + 44)
 	ename.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ename.z_index = 4
 	add_child(ename)
 	_refresh_elephant()
 
@@ -1210,13 +1215,11 @@ func _refresh_elephant() -> void:
 		_elephant_sprite.modulate.a = 0.3
 	else:
 		_elephant_sprite.modulate.a = 1.0
-	# v6.8: fix HP bar update (was calling non-existent set_values)
+	# v6.8.5: HpStrip update
 	if _elephant_hpbar != null:
-		var pb := _elephant_hpbar as ProgressBar
-		if pb:
-			UIH.set_hp_bar(pb, bs.elephant.hp, bs.elephant.max_hp)
-	if _elephant_hp_label != null:
-		_elephant_hp_label.text = "%d / %d" % [bs.elephant.hp, bs.elephant.max_hp]
+		var hs := _elephant_hpbar as HpStrip
+		if hs:
+			hs.set_hp(bs.elephant.hp, bs.elephant.max_hp)
 
 
 func _build_energy_cluster() -> void:
