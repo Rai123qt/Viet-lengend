@@ -1069,8 +1069,8 @@ func _build_command_panel() -> void:
 	sb.shadow_offset = Vector2(0, 3)
 	panel.add_theme_stylebox_override("panel", sb)
 	panel.position = Vector2(16, 532)
-	panel.custom_minimum_size = Vector2(212, 172)
-	panel.size = Vector2(212, 172)
+	panel.custom_minimum_size = Vector2(212, 120)  # v6.8: shrunk from 172 (items moved to top bar)
+	panel.size = Vector2(212, 120)
 	add_child(panel)
 	_cmd_panel = panel
 	var vb := VBoxContainer.new()
@@ -1102,9 +1102,11 @@ func _build_command_panel() -> void:
 	ecap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	eqv.add_child(ecap)
 	r2.add_child(eqv)
-	for b in _item_btns:
-		(b as Control).size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		r2.add_child(b)
+	# v6.8: item slots moved to top bar - removed from here to shrink panel
+	# (was covering DRAW pile)
+	# for b in _item_btns:
+	# 	(b as Control).size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# 	r2.add_child(b)
 	# v5.7: relic row (Rai: relics weren't displayed)
 	_relic_box = HBoxContainer.new()
 	_relic_box.add_theme_constant_override("separation", 6)

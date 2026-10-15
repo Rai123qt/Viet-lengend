@@ -9,18 +9,23 @@ func _ready() -> void:
 	add_child(UIH.screen_bg("res://assets/art/vl/bg_forest.png"))
 	var vb := VBoxContainer.new()
 	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vb.add_theme_constant_override("separation", 14)
+	vb.add_theme_constant_override("separation", 10)
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(vb)
-	vb.add_child(UIH.title("CHOOSE YOUR HERO", 40))
-	vb.add_child(UIH.spacer(20))
-	var sub := UIH.label("Two legends. Two ways to fight. Tap to choose.", 16, UIH.LT_DIM)
+	vb.add_child(UIH.title("CHOOSE YOUR HERO", 36))
+	var sub := UIH.label("Two legends. Two ways to fight. Tap to choose.", 14, UIH.LT_DIM)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(sub)
+	# v6.8: ScrollContainer for small screens (was fixed 420x520 cards getting cut off)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 480)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vb.add_child(scroll)
 	var hb := HBoxContainer.new()
 	hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	hb.add_theme_constant_override("separation", 28)
-	vb.add_child(hb)
+	hb.add_theme_constant_override("separation", 20)
+	hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(hb)
 	for hid in CharacterDB.ORDER:
 		hb.add_child(_hero_card(str(hid)))
 
@@ -29,7 +34,7 @@ func _hero_card(hero_id: String) -> Control:
 	var h: Dictionary = CharacterDB.get_hero(hero_id)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", UIH.paper_style(UIH.INK, 3, 6))
-	card.custom_minimum_size = Vector2(420, 520)
+	card.custom_minimum_size = Vector2(360, 460)  # v6.8: shrunk from 420x520 for small screens
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var cv := VBoxContainer.new()
 	cv.add_theme_constant_override("separation", 8)
@@ -40,7 +45,7 @@ func _hero_card(hero_id: String) -> Control:
 	if tex != null:
 		var img := TextureRect.new()
 		img.texture = tex
-		img.custom_minimum_size = Vector2(380, 240)
+		img.custom_minimum_size = Vector2(320, 200)  # v6.8: shrunk from 380x240
 		img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		img.mouse_filter = Control.MOUSE_FILTER_IGNORE
