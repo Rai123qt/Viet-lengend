@@ -494,6 +494,8 @@ func _build_ui() -> void:
 	_player_strip.position = Vector2(HERO_CX - 110.0, FEET_Y + 10.0)
 	# above the hand cards (armed cards lift to z 5, above the plates)
 	_player_strip.z_index = 4
+	# v6.8.2: hidden - HP now in top bar (Indies' Lies-style)
+	_player_strip.visible = false
 	add_child(_player_strip)
 	# player name on a small dark wood plaque (v3.9.2: readable on any bg)
 	# v5.9: hero-aware.
@@ -511,6 +513,8 @@ func _build_ui() -> void:
 	pplaque.size = Vector2(pppw, 22)
 	pplaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pplaque.z_index = 4
+	# v6.8.2: hidden - name now in top bar
+	pplaque.visible = false
 	add_child(pplaque)
 	_p_name_l = pnm
 	# player status chips: ONE centered row under the name
