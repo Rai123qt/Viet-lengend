@@ -494,8 +494,8 @@ func _build_ui() -> void:
 	_player_strip.position = Vector2(HERO_CX - 110.0, FEET_Y + 10.0)
 	# above the hand cards (armed cards lift to z 5, above the plates)
 	_player_strip.z_index = 4
-	# v6.8.2: hidden - HP now in top bar (Indies' Lies-style)
-	_player_strip.visible = false
+	# v6.8.3: visible again - Indies' Lies has HP bar under character (top is text only)
+	_player_strip.visible = true
 	add_child(_player_strip)
 	# player name on a small dark wood plaque (v3.9.2: readable on any bg)
 	# v5.9: hero-aware.
@@ -2089,7 +2089,7 @@ func _build_top_bar() -> void:
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(vbox)
 	
-	# HP row: heart + bar + numbers
+	# HP row: heart + numbers only (v6.8.3: Indies' Lies has no bar on top, just text)
 	var hp_hb := HBoxContainer.new()
 	hp_hb.add_theme_constant_override("separation", 8)
 	hp_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2097,11 +2097,10 @@ func _build_top_bar() -> void:
 	var heart := UIH.label("♥", 18, Color(0.85, 0.25, 0.20))
 	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hp_hb.add_child(heart)
-	_top_hp_bar = UIH.hp_bar(130, 16)
-	hp_hb.add_child(_top_hp_bar)
-	_top_hp_label = UIH.label("", 14, Color(1, 1, 1))
+	_top_hp_label = UIH.label("", 16, Color(1, 1, 1))
 	_top_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hp_hb.add_child(_top_hp_label)
+	# (no HP bar on top - Indies' Lies style, bar is under character)
 	
 	# Gold row: coin + amount
 	var gold_hb := HBoxContainer.new()
@@ -2145,19 +2144,14 @@ func _build_top_bar() -> void:
 
 func _update_top_bar() -> void:
 	# Update HP, gold, items in the top bar. Called on state changes.
-	# v6.8: defensive - Game.battle may not exist during _build_ui in tests
-	if _top_hp_bar:
+	# v6.8.3: top shows text only (Indies' Lies style), bar is under character
+	if _top_hp_label:
 		var hp: int = 80
 		var max_hp: int = 80
 		if Game.get("battle") != null:
 			hp = Game.battle.player_hp
 			max_hp = Game.battle.player_max_hp
-		var pb := _top_hp_bar as ProgressBar
-		if pb:
-			pb.max_value = max_hp
-			pb.value = hp
-		if _top_hp_label:
-			_top_hp_label.text = "%d / %d" % [hp, max_hp]
+		_top_hp_label.text = "%d / %d" % [hp, max_hp]
 	if _top_gold_label:
 		_top_gold_label.text = str(Game.gold)
 	# TODO: update item slot icons (v6.8.1)
