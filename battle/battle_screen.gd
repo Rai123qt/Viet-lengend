@@ -2177,9 +2177,13 @@ func _shake(node: Control, strength: float = 8.0) -> void:
 
 
 func _flash(node: Control, color: Color) -> void:
+	# White flash: use overbright (2,2,2) for a true white-out effect
+	var flash_color := color
+	if color == Color(1, 1, 1):
+		flash_color = Color(2.5, 2.5, 2.5)
 	var tw := create_tween()
-	tw.tween_property(node, "modulate", color, 0.08)
-	tw.tween_property(node, "modulate", Color.WHITE, 0.25)
+	tw.tween_property(node, "modulate", flash_color, 0.06)
+	tw.tween_property(node, "modulate", Color.WHITE, 0.22)
 
 
 func _enemy_center(i: int = -1) -> Vector2:
@@ -2224,7 +2228,7 @@ func _dot_tex() -> Texture2D:
 
 
 ## One-shot particle burst at a canvas position.
-func _burst(pos: Vector2, color: Color, count: int = 20, speed: float = 280.0) -> void:
+func _burst(pos: Vector2, color: Color, count: int = 20, speed: float = 280.0, direction: Vector2 = Vector2(0, -1), spread: float = 180.0) -> void:
 	var p := CPUParticles2D.new()
 	p.texture = _dot_tex()
 	p.amount = count
@@ -2232,8 +2236,8 @@ func _burst(pos: Vector2, color: Color, count: int = 20, speed: float = 280.0) -
 	p.explosiveness = 0.92
 	p.lifetime = 0.65
 	p.position = pos
-	p.direction = Vector2(0, -1)
-	p.spread = 180.0
+	p.direction = direction
+	p.spread = spread
 	p.initial_velocity_min = speed * 0.35
 	p.initial_velocity_max = speed
 	p.gravity = Vector2(0, 620)
@@ -2609,18 +2613,22 @@ func _animate_card_events(events: Array, card: Dictionary, from_pos: Vector2, ar
 			# NOTE: do NOT `await din.finished` here — the 0.18s dash always
 			# finishes during the 0.22s card flight, and awaiting an
 			# already-finished tween hangs forever on Godot 4.7.
-			_slash_arc(_enemy_center(tgt), Color(1, 1, 1, 0.95), 330.0, 0.28)
-			_slash_arc(_enemy_center(tgt), UIH.RED, 250.0, 0.34, true)
+			_slash_arc(_enemy_center(tgt), Color(1, 1, 1, 0.95), 420.0, 0.28)
+			_slash_arc(_enemy_center(tgt), UIH.RED, 320.0, 0.34, true)
 			Sfx.play("strike")
 			await _hit_stop(0.09)
 			_set_enemy_pose(tgt, "hurt")
 			Sfx.play("enemy_hit")
 			_sync_hp()  # enemy HP drops as the slash lands
 			_flash(_enemy_sprites[tgt], Color(1, 1, 1))
-			_burst(_enemy_center(tgt), Color(1, 1, 1, 0.95), 22, 340.0)
-			_burst(_enemy_center(tgt), UIH.RED, 18, 260.0)
-			_shake(self, 14.0)
-			_knockback(_enemy_sprites[tgt], 42.0)
+			var hit_dir := (_enemy_center(tgt) - _player_center()).normalized()
+			_burst(_enemy_center(tgt), Color(1, 1, 1, 0.95), 28, 420.0, hit_dir, 60.0)
+			_burst(_enemy_center(tgt), UIH.RED, 22, 320.0, hit_dir, 60.0)
+			_shake(self, 18.0)
+			_knockback(_enemy_sprites[tgt], 55.0)
+			# Player bounces back slightly on impact
+			var bounce := create_tween()
+			bounce.tween_property(_player_sprite, "position:x", _player_sprite.position.x - 18.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			await _wait(0.28)  # enemy holds the hurt pose
 			_set_enemy_pose(tgt, "idle")
 			var dout := create_tween()
@@ -2779,15 +2787,17 @@ func _animate_enemy_events(events: Array) -> void:
 				var ltw := create_tween()
 				ltw.tween_property(esp, "position:x", sx - 110, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 				await ltw.finished  # safe: just created, 0.14s
-				_slash_arc(_player_center(), Color(1, 0.25, 0.2, 0.95), 300.0, 0.28, true)
+				_slash_arc(_player_center(), Color(1, 0.25, 0.2, 0.95), 380.0, 0.28, true)
 				await _hit_stop(0.07)
 				_stop_idle_bob()
 				_set_player_pose("hurt")
 				Sfx.play("player_hit")
-				_flash(_player_sprite, Color(1, 0.35, 0.35))
-				_burst(_player_center(), UIH.RED, 16, 260.0)
-				_shake(self, 10.0)
-				_knockback(_player_sprite, -26.0)
+				_flash(_player_sprite, Color(1, 1, 1))
+				var ehit_dir := (_player_center() - _enemy_center(cur_ei)).normalized()
+				_burst(_player_center(), UIH.RED, 22, 340.0, ehit_dir, 60.0)
+				_burst(_player_center(), Color(1, 1, 1, 0.9), 16, 280.0, ehit_dir, 60.0)
+				_shake(self, 14.0)
+				_knockback(_player_sprite, -35.0)
 				if e.get("armor_broke", false):
 					# armor shattered on this hit: light shake on the HP strip
 					# (separate node — avoids fighting the main shake tween)
