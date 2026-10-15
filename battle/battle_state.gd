@@ -1443,7 +1443,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"voi_than": _log("TODO: voi_than effect not yet implemented.")
 		"hop_suc": _log("TODO: hop_suc effect not yet implemented.")
 		"cham_voi": _heal_elephant(_up(17) if up else 12)
-		"giap_voi": elephant_block += _up(28) if up else 20
+		"giap_voi": elephant.armor += _up(28) if up else 20
 		"duong_suc": _log("TODO: duong_suc effect not yet implemented.")
 		"thuoc_voi":
 			draw_cards(_up(1) if up else 1)
@@ -1458,7 +1458,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"trinh_sat": _log("TODO: trinh_sat effect not yet implemented.")
 		"doi_hinh":
 			_gain_block(_up(17) if up else 12)
-			elephant_block += _up(12) if up else 8
+			elephant.armor += _up(12) if up else 8
 		"phan_cong": _log("TODO: phan_cong effect not yet implemented.")
 		"tap_hop": energy += _up(3) if up else 2
 		"chien_thuat_du_kich":

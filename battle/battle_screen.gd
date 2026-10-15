@@ -2135,9 +2135,13 @@ func _build_top_bar() -> void:
 
 func _update_top_bar() -> void:
 	# Update HP, gold, items in the top bar. Called on state changes.
-	if _top_hp_bar and Game.battle:
-		var hp := Game.battle.player_hp
-		var max_hp := Game.battle.player_max_hp
+	# v6.8: defensive - Game.battle may not exist during _build_ui in tests
+	if _top_hp_bar:
+		var hp: int = 80
+		var max_hp: int = 80
+		if Game.get("battle") != null:
+			hp = Game.battle.player_hp
+			max_hp = Game.battle.player_max_hp
 		var pb := _top_hp_bar as ProgressBar
 		if pb:
 			pb.max_value = max_hp
