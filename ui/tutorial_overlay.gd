@@ -29,6 +29,19 @@ func _hero_intro_text() -> String:
 
 
 func _define_steps() -> void:
+	var is_hbt := Game.hero_id == "hai_ba_trung"
+	var power_step := {
+		"title": "CHORDS (YOUR POWER)",
+		"text": "Thach Sanh fights with MUSIC.\n\nPlay Attack/Skill cards and your NOTE STRING builds automatically — red notes = Attack, green = Skill.\n\nComplete a chord's note order (see CHORD BOOK) to trigger it — max 1 chord per turn!\nA wrong note snaps the string.\nPower cards are free grace notes.\n\n(Tap anywhere to continue)",
+		"target": "chord",
+	}
+	if is_hbt:
+		# v6.8: HBT uses war elephant + bow, not chords
+		power_step = {
+			"title": "WAR ELEPHANT",
+			"text": "Your WAR ELEPHANT fights beside you!\n\n30 HP, tramples ALL enemies for 12 damage every 3 turns.\n25% of enemy attacks hit the elephant instead of you.\n\nUse Elephant cards to command it: charge, guard, heal.\n\n(Tap anywhere to continue)",
+			"target": "elephant",
+		}
 	_steps = [
 		{
 			"title": "VIET LEGENDS",
@@ -50,11 +63,7 @@ func _define_steps() -> void:
 			"text": "Card borders show the card TYPE:\n\nRED = ATTACK (damage)\nGREEN = SKILL (block, draw, tricks)\nGOLD = POWER (stays in play)\n\n(Tap anywhere to continue)",
 			"target": "hand",
 		},
-		{
-			"title": "CHORDS (YOUR POWER)",
-			"text": "Thach Sanh fights with MUSIC.\n\nPlay Attack/Skill cards and your NOTE STRING builds automatically — red notes = Attack, green = Skill.\n\nComplete a chord's note order (see CHORD BOOK) to trigger it — max 1 chord per turn!\nA wrong note snaps the string.\nPower cards are free grace notes.\n\n(Tap anywhere to continue)",
-			"target": "chord",
-		},
+		power_step,
 		{
 			"title": "TRY IT!",
 			"text": "To attack:\n1. Tap an ATTACK card (red border)\n2. Tap it again to confirm\n(or drag the card up)\n\nTry playing one now!",

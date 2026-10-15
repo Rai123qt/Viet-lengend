@@ -98,7 +98,7 @@ class NoteEnergy extends Control:
 ## This sizes the (1.14x zoomed) texture by the COVERED scale but positions
 ## it so image fraction GROUND_F always lands at GROUND_Y, on any aspect.
 class PinnedBg extends TextureRect:
-	var ground_f := 0.66
+	var ground_f := 0.72  # v6.8: raised from 0.66 so painted ground meets feet (was floating)
 	var ground_y := 410.0
 	var zoom := 1.14
 
@@ -202,6 +202,7 @@ var _player_sprite: Control
 # v5.9: War Elephant UI (Hai Ba Trung)
 var _elephant_sprite: Control = null
 var _elephant_hpbar: Control = null
+var _elephant_hp_label: Label = null  # v6.8: HP numbers
 var _player_home := Vector2.ZERO
 var _pose_tex := {}
 var _bob_tween: Tween = null
@@ -247,6 +248,11 @@ var _equip_btn: IconButton
 var _item_btns: Array = []
 var _item_emos: Array = []
 var _cmd_panel: PanelContainer  # v3.2 unified bottom-left command panel
+# v6.8 top bar widgets
+var _top_hp_bar: Control
+var _top_hp_label: Label
+var _top_gold_label: Label
+var _top_item_slots: Array = []
 var _end_btn: Button
 var _float_layer: Control
 var _banner_l: Label
@@ -542,6 +548,7 @@ func _build_ui() -> void:
 	_build_command_panel()
 	_build_end_stamp()
 	_build_pause_btn()
+	_build_top_bar()  # v6.8: Indies' Lies-style top bar (portrait, HP, gold, items)
 
 	# ---- hand (bottom-center): plain holder, cards positioned manually ----
 	# (HBoxContainer auto-layout proved unreliable: stale children and transient
@@ -1157,7 +1164,9 @@ func _build_elephant_ui() -> void:
 	if not bs.has_elephant:
 		return
 	# v6.2: Use art texture for war elephant (facing right)
+	# v6.8: Moved IN FRONT of hero (tank position, was behind at HERO_CX-240)
 	var etex := UIH.try_tex("res://assets/art/vl/elephant_war.png")
+	var ex := HERO_CX + 120.0  # in front, between hero and enemies
 	if etex != null:
 		var tr := TextureRect.new()
 		tr.texture = etex
@@ -1169,12 +1178,22 @@ func _build_elephant_ui() -> void:
 		_elephant_sprite = tr
 	else:
 		_elephant_sprite = ElephantSprite.new()
-	_elephant_sprite.position = Vector2(HERO_CX - 240, FEET_Y - 140)
+	_elephant_sprite.position = Vector2(ex, FEET_Y - 140)
 	add_child(_elephant_sprite)
-	# HP bar below elephant
-	_elephant_hpbar = UIH.hp_bar(140)
-	_elephant_hpbar.position = Vector2(HERO_CX - 240, FEET_Y + 5)
+	# HP bar below elephant (red, with numbers)
+	_elephant_hpbar = UIH.hp_bar(140, 20)
+	_elephant_hpbar.position = Vector2(ex + 10, FEET_Y + 5)
 	add_child(_elephant_hpbar)
+	# HP number label
+	_elephant_hp_label = UIH.label("", 14, Color(1, 1, 1))
+	_elephant_hp_label.position = Vector2(ex + 10, FEET_Y + 28)
+	_elephant_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_elephant_hp_label)
+	# Name label
+	var ename := UIH.label("WAR ELEPHANT", 14, Color(0.95, 0.88, 0.70))
+	ename.position = Vector2(ex - 10, FEET_Y + 48)
+	ename.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(ename)
 	_refresh_elephant()
 
 
@@ -1185,8 +1204,13 @@ func _refresh_elephant() -> void:
 		_elephant_sprite.modulate.a = 0.3
 	else:
 		_elephant_sprite.modulate.a = 1.0
-	if _elephant_hpbar != null and _elephant_hpbar.has_method("set_values"):
-		_elephant_hpbar.set_values(bs.elephant.hp, bs.elephant.max_hp)
+	# v6.8: fix HP bar update (was calling non-existent set_values)
+	if _elephant_hpbar != null:
+		var pb := _elephant_hpbar as ProgressBar
+		if pb:
+			UIH.set_hp_bar(pb, bs.elephant.hp, bs.elephant.max_hp)
+	if _elephant_hp_label != null:
+		_elephant_hp_label.text = "%d / %d" % [bs.elephant.hp, bs.elephant.max_hp]
 
 
 func _build_energy_cluster() -> void:
@@ -1990,6 +2014,143 @@ func _build_pause_btn() -> void:
 	btn.tapped.connect(_show_pause)
 	pb.position = Vector2(_vsz().x - 68, 12)
 	add_child(pb)
+
+
+## v6.8: Top status bar (Indies' Lies-style).
+## Left: portrait + name + HP bar + gold. Right: item slots.
+## Dong Ho folk style: dark red silk bg, bamboo/wood frames.
+func _build_top_bar() -> void:
+	var vw := _vsz().x
+	var bar_h := 76.0
+	
+	# Background: dark red silk strip
+	var bg := ColorRect.new()
+	bg.color = Color(0.35, 0.12, 0.10, 0.92)  # dark brick red
+	bg.position = Vector2(0, 0)
+	bg.size = Vector2(vw, bar_h)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.z_index = 50
+	add_child(bg)
+	
+	# Gold bottom edge (silk trim)
+	var trim := ColorRect.new()
+	trim.color = Color(0.79, 0.66, 0.42, 0.9)  # ochre gold
+	trim.position = Vector2(0, bar_h - 3)
+	trim.size = Vector2(vw, 3)
+	trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	trim.z_index = 51
+	add_child(trim)
+	
+	var hb := HBoxContainer.new()
+	hb.position = Vector2(12, 8)
+	hb.size = Vector2(vw - 24, bar_h - 16)
+	hb.add_theme_constant_override("separation", 16)
+	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.z_index = 52
+	add_child(hb)
+	
+	# --- Portrait (circular, bamboo frame) ---
+	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
+	if Game.hero_id == "hai_ba_trung":
+		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
+	var ptex := UIH.try_tex(hero_art)
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(60, 60)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	if ptex:
+		portrait.texture = ptex
+	# TODO: circular mask + bamboo frame (v6.8.1 polish)
+	hb.add_child(portrait)
+	
+	# --- Name + HP + Gold (vertical) ---
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(vbox)
+	
+	var hero_name := CharacterDB.hero_name(Game.hero_id)
+	var name_l := UIH.label(hero_name, 18, Color(0.95, 0.88, 0.70))
+	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(name_l)
+	
+	# HP bar (bamboo style, compact)
+	var hp_hb := HBoxContainer.new()
+	hp_hb.add_theme_constant_override("separation", 8)
+	hp_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(hp_hb)
+	
+	_top_hp_bar = UIH.hp_bar(180, 18)  # reuse bamboo HP bar helper
+	hp_hb.add_child(_top_hp_bar)
+	_top_hp_label = UIH.label("", 14, Color(1, 1, 1))
+	_top_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hp_hb.add_child(_top_hp_label)
+	
+	# Gold
+	var gold_hb := HBoxContainer.new()
+	gold_hb.add_theme_constant_override("separation", 6)
+	gold_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(gold_hb)
+	var coin_l := UIH.label("◉", 16, Color(0.91, 0.76, 0.29))  # gold coin icon
+	coin_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_hb.add_child(coin_l)
+	_top_gold_label = UIH.label(str(Game.gold), 16, Color(0.91, 0.76, 0.29))
+	_top_gold_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_hb.add_child(_top_gold_label)
+	
+	# Spacer
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(spacer)
+	
+	# --- Item slots (right side) ---
+	var item_hb := HBoxContainer.new()
+	item_hb.add_theme_constant_override("separation", 8)
+	item_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	item_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(item_hb)
+	
+	_top_item_slots = []
+	for i in range(3):
+		var slot := Button.new()
+		slot.custom_minimum_size = Vector2(52, 52)
+		slot.text = ""
+		# Wood frame style
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.25, 0.18, 0.12, 0.9)
+		sb.border_color = Color(0.55, 0.42, 0.28)
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(6)
+		slot.add_theme_stylebox_override("normal", sb)
+		var idx := i
+		slot.pressed.connect(func(): _use_top_item(idx))
+		item_hb.add_child(slot)
+		_top_item_slots.append(slot)
+	
+	_update_top_bar()
+
+
+func _update_top_bar() -> void:
+	# Update HP, gold, items in the top bar. Called on state changes.
+	if _top_hp_bar and Game.battle:
+		var hp := Game.battle.player_hp
+		var max_hp := Game.battle.player_max_hp
+		var pb := _top_hp_bar as ProgressBar
+		if pb:
+			pb.max_value = max_hp
+			pb.value = hp
+		if _top_hp_label:
+			_top_hp_label.text = "%d / %d" % [hp, max_hp]
+	if _top_gold_label:
+		_top_gold_label.text = str(Game.gold)
+	# TODO: update item slot icons (v6.8.1)
+
+
+func _use_top_item(idx: int) -> void:
+	# Use item from top bar slot
+	if idx < Game.items.size():
+		_on_use_item(idx)
 
 
 func _build_deck_btn() -> void:
