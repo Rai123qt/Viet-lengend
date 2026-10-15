@@ -1637,9 +1637,11 @@ func _refresh(defer_hp := false) -> void:
 	var n := bs.hand.size()
 	var cw := CardWidget.CARD_W
 	var ch := CardWidget.CARD_H
-	# v5.7.4: hand zone shifted left (Rai: still looked right-shifted)
-	var zone_l := 280.0
-	var zone_r := 900.0
+	# v6.5: center hand zone on screen (Rai: cards looked left-shifted)
+	var vw := _vsz().x
+	var zone_w0 := 620.0
+	var zone_l := (vw - zone_w0) * 0.5
+	var zone_r := zone_l + zone_w0
 	var zone_w := zone_r - zone_l
 	var sep := 14.0
 	if n > 1:
