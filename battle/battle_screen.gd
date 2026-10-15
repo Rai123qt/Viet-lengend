@@ -253,6 +253,9 @@ var _top_hp_bar: Control
 var _top_hp_label: Label
 var _top_gold_label: Label
 var _top_item_slots: Array = []
+var _top_dura_slots: Array = []  # v6.9.2: weapon durability
+var _top_weapon_slot: Button = null  # v6.9.2
+var _energy_coin_label: Label = null  # v6.9.2: energy coin at bottom-left
 var _end_btn: Button
 var _float_layer: Control
 var _banner_l: Label
@@ -454,13 +457,13 @@ func _build_ui() -> void:
 	_build_street()
 	_build_ambient()
 	# v3.1: thin divider marking the hard stage/tray split (TRAY_TOP).
-	# Purely decorative; sits behind the cards.
-	var div := ColorRect.new()
-	div.color = Color(0.85, 0.75, 0.55, 0.28)
-	div.position = Vector2(0, TRAY_TOP - 1.0)
-	div.size = Vector2(_vsz().x, 2.0)
-	div.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(div)
+	# v6.9.2: REMOVED per Rai (white line across grass)
+	# var div := ColorRect.new()
+	# div.color = Color(0.85, 0.75, 0.55, 0.28)
+	# div.position = Vector2(0, TRAY_TOP - 1.0)
+	# div.size = Vector2(_vsz().x, 2.0)
+	# div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# add_child(div)
 
 	# ---- player sprite (left): Thach Sanh, Dong Ho folk art ----
 	# feet on the shared ground line FEET_Y; vl2 art first, vl fallback
@@ -1075,6 +1078,8 @@ func _build_command_panel() -> void:
 	panel.position = Vector2(16, 532)
 	panel.custom_minimum_size = Vector2(212, 120)  # v6.8: shrunk from 172 (items moved to top bar)
 	panel.size = Vector2(212, 120)
+	# v6.9.2: HIDDEN per Rai - replaced by Draw Pile + Energy coin at bottom-left
+	panel.visible = false
 	add_child(panel)
 	_cmd_panel = panel
 	var vb := VBoxContainer.new()
@@ -1196,7 +1201,7 @@ func _build_elephant_ui() -> void:
 	ehs.setup()
 	ehs.custom_minimum_size = Vector2(200, 32)
 	ehs.size = Vector2(200, 32)
-	ehs.position = Vector2(ex + 10, FEET_Y + 8)
+	ehs.position = Vector2(ex + 10, FEET_Y + 18)  # v6.9.2: moved down 10px for separation from player HP
 	ehs.z_index = 4
 	add_child(ehs)
 	# Name label
@@ -1240,7 +1245,36 @@ func _build_energy_cluster() -> void:
 	add_child(_draw_pile)
 	_draw_pile.mouse_filter = Control.MOUSE_FILTER_STOP
 	_draw_pile.gui_input.connect(_on_pile_tapped.bind("draw"))
+	# v6.9.2: Energy coin above Draw Pile (per Rai: bronze drum/coin showing 3/3)
+	_build_energy_coin()
 	_build_deck_btn()
+
+
+func _build_energy_coin() -> void:
+	# v6.9.2: Large bronze coin/drum showing energy (3/3), above Draw Pile at bottom-left.
+	# Per Rai: ancient coin/bronze drum style.
+	var coin_btn := Button.new()
+	coin_btn.custom_minimum_size = Vector2(84, 84)
+	coin_btn.text = ""
+	var csb := StyleBoxFlat.new()
+	csb.bg_color = Color(0.75, 0.58, 0.28)  # bronze/gold
+	csb.border_color = Color(0.45, 0.32, 0.15)
+	csb.set_border_width_all(4)
+	csb.set_corner_radius_all(42)  # circular
+	coin_btn.add_theme_stylebox_override("normal", csb)
+	coin_btn.add_theme_stylebox_override("hover", csb)
+	coin_btn.add_theme_stylebox_override("pressed", csb)
+	coin_btn.position = Vector2(20, 540)  # above Draw Pile (at 640)
+	coin_btn.z_index = 10
+	coin_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(coin_btn)
+	# Energy text on the coin
+	_energy_coin_label = UIH.label("3/3", 20, Color(0.25, 0.15, 0.05))
+	_energy_coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_energy_coin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_energy_coin_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_energy_coin_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coin_btn.add_child(_energy_coin_label)
 
 
 func _pile_slip(caption: String, parent: Control) -> Label:
@@ -1601,6 +1635,9 @@ func _refresh(defer_hp := false) -> void:
 	_p_vuln.set_value(bs.player.vulnerable)
 	_p_strength.set_value(bs.player.strength)
 	_note_energy.set_values(bs.energy, _max_energy())
+	# v6.9.2: update energy coin
+	if _energy_coin_label:
+		_energy_coin_label.text = "%d/%d" % [bs.energy, _max_energy()]
 	_discard_pile.set_count(bs.discard_pile.size())
 	if _draw_pile:
 		_draw_pile.set_count(bs.draw_pile.size())
@@ -2026,121 +2063,198 @@ func _build_pause_btn() -> void:
 	add_child(pb)
 
 
-## v6.8.2: Top-left status cluster (Indies' Lies-style).
-## Compact corner: large circular avatar + HP/Gold panel, 3 item slots below.
-## Dong Ho style: bamboo/wood frame (not gear).
+## v6.9.2: Antique Wooden Plaque HUD (per Rai's design).
+## Horizontal dark wood board with brass corners, fits in sky area.
+## Left: large circular avatar (brass frame). Middle: HP/Gold (top), 3 item slots (bottom).
+## Right: weapon compartment (divider + axe slot + durability + EQUIP).
 func _build_top_bar() -> void:
-	var ox := 16.0
-	var oy := 12.0
-	var avatar_sz := 92.0
+	var ox := 14.0
+	var oy := 10.0
+	var plaque_w := 520.0
+	var plaque_h := 128.0
 	
-	# --- Avatar (large circle, bamboo frame) ---
+	# --- Main wooden plaque ---
+	var plaque := PanelContainer.new()
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.28, 0.19, 0.12, 0.96)  # dark antique wood
+	psb.border_color = Color(0.72, 0.58, 0.32)  # brass
+	psb.set_border_width_all(3)
+	psb.set_corner_radius_all(10)
+	# Wood grain effect via shadow
+	psb.shadow_color = Color(0, 0, 0, 0.4)
+	psb.shadow_size = 8
+	psb.content_margin_left = 14
+	psb.content_margin_right = 14
+	psb.content_margin_top = 10
+	psb.content_margin_bottom = 10
+	plaque.add_theme_stylebox_override("panel", psb)
+	plaque.position = Vector2(ox, oy)
+	plaque.custom_minimum_size = Vector2(plaque_w, plaque_h)
+	plaque.size = Vector2(plaque_w, plaque_h)
+	plaque.z_index = 50
+	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(plaque)
+	
+	# Brass corner accents (4 small squares)
+	for cx in [0, 1]:
+		for cy in [0, 1]:
+			var corner := ColorRect.new()
+			corner.color = Color(0.85, 0.68, 0.35)
+			corner.size = Vector2(12, 12)
+			corner.position = Vector2(
+				ox + (plaque_w - 12 if cx == 1 else 0),
+				oy + (plaque_h - 12 if cy == 1 else 0)
+			)
+			corner.z_index = 51
+			corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			add_child(corner)
+	
+	var hb := HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 14)
+	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plaque.add_child(hb)
+	
+	# --- LEFT: Avatar (large, brass engraved frame) ---
+	var avatar_sz := 100.0
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
 	var ptex := UIH.try_tex(hero_art)
 	
-	# Bamboo circular frame (drawn as Panel with rounded corners)
-	var frame := PanelContainer.new()
-	var fsb := StyleBoxFlat.new()
-	fsb.bg_color = Color(0.22, 0.16, 0.10, 0.95)  # dark wood
-	fsb.border_color = Color(0.65, 0.52, 0.32)  # bamboo
-	fsb.set_border_width_all(4)
-	fsb.set_corner_radius_all(int(avatar_sz / 2))  # circular
-	frame.add_theme_stylebox_override("panel", fsb)
-	frame.position = Vector2(ox, oy)
-	frame.custom_minimum_size = Vector2(avatar_sz, avatar_sz)
-	frame.size = Vector2(avatar_sz, avatar_sz)
-	frame.z_index = 50
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(frame)
+	var aframe := PanelContainer.new()
+	var afsb := StyleBoxFlat.new()
+	afsb.bg_color = Color(0.15, 0.10, 0.06, 1.0)
+	afsb.border_color = Color(0.80, 0.64, 0.34)  # bright brass
+	afsb.set_border_width_all(5)
+	afsb.set_corner_radius_all(int(avatar_sz / 2))
+	aframe.add_theme_stylebox_override("panel", afsb)
+	aframe.custom_minimum_size = Vector2(avatar_sz, avatar_sz)
+	aframe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(aframe)
 	
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(avatar_sz - 12, avatar_sz - 12)
+	portrait.custom_minimum_size = Vector2(avatar_sz - 14, avatar_sz - 14)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if ptex:
 		portrait.texture = ptex
-	# Center inside frame
-	var pc := CenterContainer.new()
-	pc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pc.add_child(portrait)
-	frame.add_child(pc)
+	var pcc := CenterContainer.new()
+	pcc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pcc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pcc.add_child(portrait)
+	aframe.add_child(pcc)
 	
-	# --- HP/Gold panel (right of avatar) ---
-	var info_x := ox + avatar_sz + 10
-	var panel := PanelContainer.new()
-	var psb := StyleBoxFlat.new()
-	psb.bg_color = Color(0.18, 0.12, 0.08, 0.92)
-	psb.border_color = Color(0.55, 0.42, 0.28)
-	psb.set_border_width_all(2)
-	psb.set_corner_radius_all(8)
-	psb.content_margin_left = 12
-	psb.content_margin_right = 12
-	psb.content_margin_top = 8
-	psb.content_margin_bottom = 8
-	panel.add_theme_stylebox_override("panel", psb)
-	panel.position = Vector2(info_x, oy + 6)
-	panel.z_index = 50
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(panel)
+	# --- MIDDLE: HP/Gold (top) + Items (bottom) ---
+	var mid_vb := VBoxContainer.new()
+	mid_vb.add_theme_constant_override("separation", 8)
+	mid_vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid_vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hb.add_child(mid_vb)
 	
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
-	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(vbox)
+	# Upper tier: Heart + HP, Coin + Gold (horizontal)
+	var stats_hb := HBoxContainer.new()
+	stats_hb.add_theme_constant_override("separation", 18)
+	stats_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid_vb.add_child(stats_hb)
 	
-	# HP row: heart + numbers only (v6.8.3: Indies' Lies has no bar on top, just text)
-	var hp_hb := HBoxContainer.new()
-	hp_hb.add_theme_constant_override("separation", 8)
-	hp_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(hp_hb)
-	var heart := UIH.label("♥", 18, Color(0.85, 0.25, 0.20))
+	var heart := UIH.label("♥", 22, Color(0.90, 0.28, 0.22))
 	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hp_hb.add_child(heart)
-	_top_hp_label = UIH.label("", 16, Color(1, 1, 1))
+	stats_hb.add_child(heart)
+	_top_hp_label = UIH.label("80 / 80", 18, Color(0.98, 0.94, 0.85))
 	_top_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hp_hb.add_child(_top_hp_label)
-	# (no HP bar on top - Indies' Lies style, bar is under character)
+	stats_hb.add_child(_top_hp_label)
 	
-	# Gold row: coin + amount
-	var gold_hb := HBoxContainer.new()
-	gold_hb.add_theme_constant_override("separation", 8)
-	gold_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(gold_hb)
-	var coin := UIH.label("◉", 18, Color(0.91, 0.76, 0.29))
+	var coin := UIH.label("◉", 22, Color(0.95, 0.78, 0.30))
 	coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gold_hb.add_child(coin)
-	_top_gold_label = UIH.label(str(Game.gold), 16, Color(0.91, 0.76, 0.29))
+	stats_hb.add_child(coin)
+	_top_gold_label = UIH.label(str(Game.gold), 18, Color(0.95, 0.78, 0.30))
 	_top_gold_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gold_hb.add_child(_top_gold_label)
+	stats_hb.add_child(_top_gold_label)
 	
-	# --- Item slots (3 circles below avatar, like Indies' Lies) ---
+	# Lower tier: 3 inlaid wooden item slots
+	var item_hb := HBoxContainer.new()
+	item_hb.add_theme_constant_override("separation", 10)
+	item_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid_vb.add_child(item_hb)
+	
 	_top_item_slots = []
 	for i in range(3):
 		var slot := Button.new()
-		var sz := 44.0
+		var sz := 48.0  # large enough for fingers
 		slot.custom_minimum_size = Vector2(sz, sz)
 		slot.text = ""
 		var ssb := StyleBoxFlat.new()
-		ssb.bg_color = Color(0.22, 0.16, 0.10, 0.95)
-		ssb.border_color = Color(0.55, 0.42, 0.28)
-		ssb.set_border_width_all(3)
-		ssb.set_corner_radius_all(int(sz / 2))  # circular
+		ssb.bg_color = Color(0.18, 0.12, 0.07, 1.0)  # recessed dark wood
+		ssb.border_color = Color(0.65, 0.52, 0.30)  # thin brass
+		ssb.set_border_width_all(2)
+		ssb.set_corner_radius_all(int(sz / 2))
+		# Inner shadow for "inlaid" effect
+		ssb.shadow_color = Color(0, 0, 0, 0.6)
+		ssb.shadow_size = 4
+		ssb.shadow_offset = Vector2(0, 2)
 		slot.add_theme_stylebox_override("normal", ssb)
-		# Hover/pressed variants
-		var ssb_h := ssb.duplicate() as StyleBoxFlat
-		ssb_h.border_color = Color(0.79, 0.66, 0.42)
-		slot.add_theme_stylebox_override("hover", ssb_h)
-		slot.add_theme_stylebox_override("pressed", ssb_h)
-		slot.position = Vector2(ox + 8 + i * (sz + 8), oy + avatar_sz + 10)
-		slot.z_index = 50
+		var ssh := ssb.duplicate() as StyleBoxFlat
+		ssh.border_color = Color(0.85, 0.68, 0.35)
+		slot.add_theme_stylebox_override("hover", ssh)
+		slot.add_theme_stylebox_override("pressed", ssh)
+		slot.z_index = 52
 		var idx := i
 		slot.pressed.connect(func(): _use_top_item(idx))
-		add_child(slot)
+		item_hb.add_child(slot)
 		_top_item_slots.append(slot)
+	
+	# --- DIVIDER: vertical wood strip ---
+	var div := ColorRect.new()
+	div.color = Color(0.45, 0.32, 0.18)
+	div.custom_minimum_size = Vector2(4, plaque_h - 28)
+	div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(div)
+	
+	# --- RIGHT: Weapon compartment ---
+	var wpn_vb := VBoxContainer.new()
+	wpn_vb.add_theme_constant_override("separation", 4)
+	wpn_vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	wpn_vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(wpn_vb)
+	
+	# Durability: 4 small squares on top
+	var dura_hb := HBoxContainer.new()
+	dura_hb.add_theme_constant_override("separation", 4)
+	dura_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	dura_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wpn_vb.add_child(dura_hb)
+	_top_dura_slots = []
+	for i in range(4):
+		var dsq := ColorRect.new()
+		dsq.color = Color(0.75, 0.60, 0.30)  # brass filled
+		dsq.custom_minimum_size = Vector2(14, 14)
+		dsq.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dura_hb.add_child(dsq)
+		_top_dura_slots.append(dsq)
+	
+	# Weapon slot: large circle with axe
+	var wslot := Button.new()
+	var wsz := 64.0
+	wslot.custom_minimum_size = Vector2(wsz, wsz)
+	wslot.text = "🪓"  # axe emoji as placeholder
+	wslot.add_theme_font_override("font_size", 32)
+	var wsb := StyleBoxFlat.new()
+	wsb.bg_color = Color(0.20, 0.14, 0.08, 1.0)
+	wsb.border_color = Color(0.75, 0.60, 0.32)
+	wsb.set_border_width_all(3)
+	wsb.set_corner_radius_all(int(wsz / 2))
+	wslot.add_theme_stylebox_override("normal", wsb)
+	wslot.z_index = 52
+	wslot.pressed.connect(func(): _on_equip_inspect())
+	wpn_vb.add_child(wslot)
+	_top_weapon_slot = wslot
+	
+	# EQUIP label below
+	var elab := UIH.label("EQUIP", 12, Color(0.85, 0.75, 0.55))
+	elab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	elab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wpn_vb.add_child(elab)
 	
 	_update_top_bar()
 
@@ -2221,6 +2335,11 @@ func _show_pause() -> void:
 	add_child(_pause_pop)
 	_pause_pop.popup_centered()
 	_check_end()
+
+
+func _on_equip_inspect() -> void:
+	# v6.9.2: weapon slot in top bar - same as equipment inspect
+	_on_equipment()
 
 
 func _on_equipment() -> void:
