@@ -2758,6 +2758,49 @@ func _hide_enemy_ui(i: int) -> void:
 		(_target_rings[i] as Control).visible = false
 
 
+## v6.9: HBT bow attack - stays in place, shoots arrow projectile.
+## No melee dash. Arrow flies from player to enemy.
+func _hbt_bow_attack(flyer: Control, tgt: int, card: Dictionary) -> void:
+	_stop_idle_bob()
+	# Draw bow pose (use cast pose)
+	_set_player_pose("cast")
+	# Card flies to center
+	await _fly_card_to(flyer, Vector2(_vsz().x * 0.5, 330), 1.5, 0.38)
+	await _wait(0.3)
+	# Arrow projectile: small line from player to enemy
+	var from := _player_center() + Vector2(60, -40)
+	var to := _enemy_center(tgt)
+	_arrow_shot(from, to)
+	Sfx.play("strike")  # TODO: bow sound
+	await _wait(0.25)
+	# Impact
+	_set_enemy_pose(tgt, "hurt")
+	Sfx.play("enemy_hit")
+	_sync_hp()
+	_flash(_enemy_sprites[tgt], Color(1, 1, 1))
+	var hit_dir := (to - from).normalized()
+	_burst(to, Color(1, 0.9, 0.6, 0.95), 20, 350.0, hit_dir, 50.0)
+	_shake(self, 12.0)
+	_knockback(_enemy_sprites[tgt], 35.0)
+	await _wait(0.28)
+	_set_enemy_pose(tgt, "idle")
+	_start_idle_bob()
+
+
+## Draw a quick arrow projectile line.
+func _arrow_shot(from_pos: Vector2, to_pos: Vector2) -> void:
+	var line := Line2D.new()
+	line.points = PackedVector2Array([from_pos, to_pos])
+	line.width = 4.0
+	line.default_color = Color(0.9, 0.75, 0.4)  # wood/gold
+	line.z_index = 60
+	add_child(line)
+	# Fade out
+	var tw := create_tween()
+	tw.tween_property(line, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(line.queue_free)
+
+
 func _animate_card_events(events: Array, card: Dictionary, from_pos: Vector2, armor_before: int) -> void:
 	var ctype := ""
 	for e in events:
@@ -2776,35 +2819,39 @@ func _animate_card_events(events: Array, card: Dictionary, from_pos: Vector2, ar
 	var tgt := bs.target_idx
 	match ctype:
 		"ATTACK":
-			# Bearer dashes CLOSE to the enemy: slash pose, big arc sweep,
-			# hit-stop on impact, enemy hurt pose + stronger knockback.
-			_stop_idle_bob()
-			_set_player_pose("slash")
-			_player_sprite.z_index = 5
-			var din := create_tween()
-			din.tween_property(_player_sprite, "position:x", _player_home.x + 260.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			await _fly_card_to(flyer, _enemy_center(tgt) + Vector2(-120, -60), 1.1, 0.22, 60.0)
-			# NOTE: do NOT `await din.finished` here — the 0.18s dash always
-			# finishes during the 0.22s card flight, and awaiting an
-			# already-finished tween hangs forever on Godot 4.7.
-			_slash_arc(_enemy_center(tgt), Color(1, 1, 1, 0.95), 420.0, 0.28)
-			_slash_arc(_enemy_center(tgt), UIH.RED, 320.0, 0.34, true)
-			Sfx.play("strike")
-			await _hit_stop(0.09)
-			_set_enemy_pose(tgt, "hurt")
-			Sfx.play("enemy_hit")
-			_sync_hp()  # enemy HP drops as the slash lands
-			_flash(_enemy_sprites[tgt], Color(1, 1, 1))
-			var hit_dir := (_enemy_center(tgt) - _player_center()).normalized()
-			_burst(_enemy_center(tgt), Color(1, 1, 1, 0.95), 28, 420.0, hit_dir, 60.0)
-			_burst(_enemy_center(tgt), UIH.RED, 22, 320.0, hit_dir, 60.0)
-			_shake(self, 18.0)
-			_knockback(_enemy_sprites[tgt], 55.0)
-			# Player bounces back slightly on impact
-			var bounce := create_tween()
-			bounce.tween_property(_player_sprite, "position:x", _player_sprite.position.x - 18.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-			await _wait(0.28)  # enemy holds the hurt pose
-			_set_enemy_pose(tgt, "idle")
+			# v6.9: HBT uses bow (ranged) - no dash, shoot arrow projectile
+			if Game.hero_id == "hai_ba_trung":
+				await _hbt_bow_attack(flyer, tgt, card)
+			else:
+				# Bearer dashes CLOSE to the enemy: slash pose, big arc sweep,
+				# hit-stop on impact, enemy hurt pose + stronger knockback.
+				_stop_idle_bob()
+				_set_player_pose("slash")
+				_player_sprite.z_index = 5
+				var din := create_tween()
+				din.tween_property(_player_sprite, "position:x", _player_home.x + 260.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+				await _fly_card_to(flyer, _enemy_center(tgt) + Vector2(-120, -60), 1.1, 0.22, 60.0)
+				# NOTE: do NOT `await din.finished` here — the 0.18s dash always
+				# finishes during the 0.22s card flight, and awaiting an
+				# already-finished tween hangs forever on Godot 4.7.
+				_slash_arc(_enemy_center(tgt), Color(1, 1, 1, 0.95), 420.0, 0.28)
+				_slash_arc(_enemy_center(tgt), UIH.RED, 320.0, 0.34, true)
+				Sfx.play("strike")
+				await _hit_stop(0.09)
+				_set_enemy_pose(tgt, "hurt")
+				Sfx.play("enemy_hit")
+				_sync_hp()  # enemy HP drops as the slash lands
+				_flash(_enemy_sprites[tgt], Color(1, 1, 1))
+				var hit_dir := (_enemy_center(tgt) - _player_center()).normalized()
+				_burst(_enemy_center(tgt), Color(1, 1, 1, 0.95), 28, 420.0, hit_dir, 60.0)
+				_burst(_enemy_center(tgt), UIH.RED, 22, 320.0, hit_dir, 60.0)
+				_shake(self, 18.0)
+				_knockback(_enemy_sprites[tgt], 55.0)
+				# Player bounces back slightly on impact
+				var bounce := create_tween()
+				bounce.tween_property(_player_sprite, "position:x", _player_sprite.position.x - 18.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				await _wait(0.28)  # enemy holds the hurt pose
+				_set_enemy_pose(tgt, "idle")
 			var dout := create_tween()
 			dout.tween_property(_player_sprite, "position:x", _player_home.x, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			await dout.finished  # safe: just created, 0.28s
@@ -2925,6 +2972,53 @@ func _animate_card_events(events: Array, card: Dictionary, from_pos: Vector2, ar
 				await _wait(1.0)
 			"end":
 				await _wait(0.3)
+			# v6.9: elephant events
+			"dmg_elephant":
+				var edmg := int(e["n"])
+				if _elephant_sprite:
+					_flash(_elephant_sprite, Color(1, 0.3, 0.3))
+					_shake(_elephant_sprite, 10.0)
+				_float_text(_elephant_sprite.position + Vector2(110, -40) if _elephant_sprite else Vector2(400, 300), "-%d" % edmg, UIH.RED, true, true)
+				Sfx.play("enemy_hit")
+				_refresh_elephant()
+				await _wait(0.4)
+			"trample":
+				var tdmg := int(e["n"])
+				_float_text(Vector2(_vsz().x * 0.5, 300), "TRAMPLE! %d" % tdmg, Color(0.9, 0.6, 0.2), true, true)
+				Sfx.play("enemy_hit")
+				_shake(self, 20.0)
+				# Elephant lunges forward
+				if _elephant_sprite:
+					var etw := create_tween()
+					var ehome: Vector2 = _elephant_sprite.position
+					etw.tween_property(_elephant_sprite, "position:x", ehome.x + 80.0, 0.15)
+					etw.tween_property(_elephant_sprite, "position:x", ehome.x, 0.25)
+				await _wait(0.5)
+				_sync_hp()
+			"elephant_attack":
+				var edmg := int(e["n"])
+				_float_text(_enemy_center(tgt) + Vector2(0, -60), "🐘 %d" % edmg, Color(0.9, 0.6, 0.2), true, true)
+				# Elephant headbutt animation
+				if _elephant_sprite:
+					var etw2 := create_tween()
+					var ehome2: Vector2 = _elephant_sprite.position
+					etw2.tween_property(_elephant_sprite, "position:x", ehome2.x + 60.0, 0.12)
+					etw2.tween_property(_elephant_sprite, "position:x", ehome2.x, 0.2)
+				Sfx.play("enemy_hit")
+				await _wait(0.4)
+				_sync_hp()
+			"elephant_attack_all":
+				var eadmg := int(e["n"])
+				_float_text(Vector2(_vsz().x * 0.6, 300), "🐘 %d ALL!" % eadmg, Color(0.9, 0.6, 0.2), true, true)
+				Sfx.play("enemy_hit")
+				_shake(self, 15.0)
+				if _elephant_sprite:
+					var etw3 := create_tween()
+					var ehome3: Vector2 = _elephant_sprite.position
+					etw3.tween_property(_elephant_sprite, "position:x", ehome3.x + 80.0, 0.15)
+					etw3.tween_property(_elephant_sprite, "position:x", ehome3.x, 0.25)
+				await _wait(0.5)
+				_sync_hp()
 	# armor gained has no event: pop the delta
 	var armor_gain: int = bs.player.armor - armor_before
 	if armor_gain > 0:

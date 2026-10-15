@@ -40,6 +40,15 @@ var has_elephant: bool = false
 # v5.9 HBT cards: trample bonus (war_drum), per-turn elephant heal (me_linh_oath),
 # elephant cards played this turn (sisters_fury).
 var trample_bonus: int = 0
+# v6.9: elephant buff tracking (for 41 new cards)
+var _voi_ho_ve_turns: int = 0
+var _elephant_dmg_buff: int = 0
+var _voi_thinh_no_turns: int = 0
+var _elephant_perm_dmg: int = 0
+var _hoi_phuc_used: bool = false
+var _phan_cong_turns: int = 0
+var _khieu_khich_turns: int = 0
+var _bay_dmg: int = 0
 var me_linh_heal: int = 0
 var elephant_cards_this_turn: int = 0
 var enemies: Array = []
@@ -548,7 +557,8 @@ func _damage_elephant(amount: int, ei: int = 0) -> void:
 		a -= blocked
 	if a > 0:
 		elephant.hp -= a
-		events.append({"k": "dmg_e", "n": a, "ei": ei})
+		# v6.9: specific elephant damage event (was using dmg_e which animates enemy!)
+		events.append({"k": "dmg_elephant", "n": a})
 		_log("War Elephant takes %d damage (HP %d)!" % [a, maxi(elephant.hp, 0)])
 		if elephant.hp <= 0:
 			elephant.hp = 0
@@ -1419,77 +1429,241 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"fire_arrow": _attack_damage(_up(11) if up else 8, enemy)
 		"ice_arrow": _attack_damage(_up(9) if up else 6, enemy)
 		"explosive_arrow": _attack_all(_up(24) if up else 18)
-		"eagle_eye": _log("TODO: eagle_eye effect not yet implemented.")
+		"eagle_eye":
+			_log("Eagle Eye: bow attacks +3 damage.")
+			powers_in_play.append("eagle_eye")
 		"arrow_storm": _attack_damage(_up(6) if up else 4, enemy)
-		"hunters_mark": _log("TODO: hunters_mark effect not yet implemented.")
+		"hunters_mark":
+			_log("Hunter's Mark: next attack +8 damage.")
+			next_attack_bonus += _up(12) if up else 8
 		"long_range": _attack_damage(_up(19) if up else 14, enemy)
 		"triple_volley": _attack_damage(_up(9) if up else 6, enemy)
 		"phoenix_arrow":
 			_attack_damage(_up(34) if up else 25, enemy)
 			energy += _up(2) if up else 1
-		"voi_xung_phong": _log("TODO: voi_xung_phong effect not yet implemented.")
-		"voi_giam": _log("TODO: voi_giam effect not yet implemented.")
-		"voi_ho_ve": _log("TODO: voi_ho_ve effect not yet implemented.")
-		"voi_thinh_no": _log("TODO: voi_thinh_no effect not yet implemented.")
-		"voi_quat_voi": _log("TODO: voi_quat_voi effect not yet implemented.")
-		"voi_dam_chan": _log("TODO: voi_dam_chan effect not yet implemented.")
-		"lenh_tan_cong": _log("TODO: lenh_tan_cong effect not yet implemented.")
-		"voi_huc_do": _log("TODO: voi_huc_do effect not yet implemented.")
-		"dan_voi": _log("TODO: dan_voi effect not yet implemented.")
-		"voi_chien_binh": _log("TODO: voi_chien_binh effect not yet implemented.")
-		"tieng_gam": _log("TODO: tieng_gam effect not yet implemented.")
-		"voi_lao_toi": _log("TODO: voi_lao_toi effect not yet implemented.")
-		"suc_manh_rung": _log("TODO: suc_manh_rung effect not yet implemented.")
-		"voi_than": _log("TODO: voi_than effect not yet implemented.")
-		"hop_suc": _log("TODO: hop_suc effect not yet implemented.")
+		"voi_xung_phong":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				var dmg := _up(19) if up else 14
+				events.append({"k": "elephant_attack", "n": dmg})
+				_attack_damage(dmg, enemy)
+				_log("War Elephant CHARGES! %d damage!" % dmg)
+			else:
+				_log("No elephant to charge!")
+		"voi_giam":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				var dmg := _up(14) if up else 10
+				events.append({"k": "elephant_attack_all", "n": dmg})
+				_attack_all(dmg)
+				_log("War Elephant TRAMPLES! %d to ALL!" % dmg)
+			else:
+				_log("No elephant to trample!")
+		"voi_ho_ve":
+			_log("Elephant Guard: 50% hits redirect for 2 turns.")
+			powers_in_play.append("voi_ho_ve")
+			_voi_ho_ve_turns = 2
+		"voi_thinh_no":
+			_log("War Cry: elephant +6 damage for 2 turns.")
+			powers_in_play.append("voi_thinh_no")
+			_elephant_dmg_buff += _up(9) if up else 6
+			_voi_thinh_no_turns = 2
+		"voi_quat_voi":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				var dmg := _up(12) if up else 8
+				events.append({"k": "elephant_attack", "n": dmg})
+				_attack_damage(dmg, enemy)
+				if not battle_over:
+					enemy.energy = maxi(0, enemy.energy - 1)
+					_log("Trunk Swing: %d damage, enemy -1 Energy!" % dmg)
+			else:
+				_log("No elephant!")
+		"voi_dam_chan":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				var dmg := _up(6) if up else 4
+				events.append({"k": "elephant_attack_all", "n": dmg})
+				_attack_all(dmg)
+				_log("Elephant STOMPS! %d to ALL!" % dmg)
+			else:
+				_log("No elephant!")
+		"lenh_tan_cong":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				_log("Attack Order: elephant strikes NOW!")
+				_elephant_trample()
+			else:
+				_log("No elephant!")
+		"voi_huc_do":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				var dmg := _up(22) if up else 16
+				events.append({"k": "elephant_attack", "n": dmg})
+				# Destroy block first
+				if enemy.block > 0:
+					var destroyed := mini(enemy.block, 10)
+					enemy.block -= destroyed
+					_log("Ram destroys %d Block!" % destroyed)
+				_attack_damage(dmg, enemy)
+				_log("Elephant RAMS! %d damage!" % dmg)
+			else:
+				_log("No elephant!")
+		"dan_voi":
+			_log("Herd: baby elephants join! (simplified: elephant +10 max HP)")
+			if has_elephant and elephant != null:
+				elephant.max_hp += 10
+				_heal_elephant(10)
+		"voi_chien_binh":
+			_log("War Training: elephant +2 damage each turn.")
+			powers_in_play.append("voi_chien_binh")
+		"tieng_gam":
+			_log("Roar: ALL enemies -1 Strength!")
+			for e in enemies:
+				if e.hp > 0:
+					e.strength = maxi(0, e.strength - 1)
+			events.append({"k": "weak_all"})
+		"voi_lao_toi":
+			_log("Advance: elephant next hit +8.")
+			_elephant_dmg_buff += _up(12) if up else 8
+		"suc_manh_rung":
+			if has_elephant and elephant != null:
+				elephant.max_hp += _up(20) if up else 15
+				_heal_elephant(_up(20) if up else 15)
+				_log("Jungle Strength: elephant +15 max HP, heal 15!")
+		"voi_than":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				events.append({"k": "elephant_attack_all", "n": 20})
+				_attack_all(_up(28) if up else 20)
+				_log("GOD ELEPHANT! 20 to ALL, invincible 1 turn!")
+				powers_in_play.append("voi_than_invuln")
+		"hop_suc":
+			var d1 := _up(12) if up else 8
+			_attack_damage(d1, enemy)
+			if has_elephant and elephant != null and elephant.hp > 0 and not battle_over:
+				events.append({"k": "elephant_attack", "n": d1})
+				_attack_damage(d1, enemy)
+				_log("Combined: you %d + elephant %d!" % [d1, d1])
 		"cham_voi": _heal_elephant(_up(17) if up else 12)
 		"giap_voi": elephant.armor += _up(28) if up else 20
-		"duong_suc": _log("TODO: duong_suc effect not yet implemented.")
+		"duong_suc":
+			_log("Nurture: elephant +4 permanent damage.")
+			_elephant_perm_dmg += _up(6) if up else 4
 		"thuoc_voi":
 			draw_cards(_up(1) if up else 1)
 			_heal_elephant(_up(9) if up else 6)
-		"yeu_thuong": _log("TODO: yeu_thuong effect not yet implemented.")
-		"boc_thep": _log("TODO: boc_thep effect not yet implemented.")
-		"tinh_than_thep": _log("TODO: tinh_than_thep effect not yet implemented.")
-		"hoi_phuc": _log("TODO: hoi_phuc effect not yet implemented.")
-		"suc_ben": _log("TODO: suc_ben effect not yet implemented.")
-		"mat_ngot": _log("TODO: mat_ngot effect not yet implemented.")
+		"yeu_thuong":
+			_heal_player(_up(12) if up else 8)
+			_heal_elephant(_up(12) if up else 8)
+			_log("Care: heal 8 both!")
+		"boc_thep":
+			if has_elephant and elephant != null:
+				elephant.max_hp += _up(40) if up else 30
+				_log("Steel Hide: elephant +30 max HP!")
+		"tinh_than_thep":
+			_log("Steel Spirit: elephant immune to debuffs.")
+			powers_in_play.append("tinh_than_thep")
+		"hoi_phuc":
+			if has_elephant and elephant != null and not _hoi_phuc_used:
+				_heal_elephant(999)
+				_hoi_phuc_used = true
+				_log("Revive: elephant to FULL!")
+			else:
+				_log("Already used!")
+		"suc_ben":
+			_log("Endurance: elephant +2 Block when hit.")
+			powers_in_play.append("suc_ben")
+		"mat_ngot":
+			_log("Sweet: +1 Energy each turn.")
+			powers_in_play.append("mat_ngot")
 		"ten_lenh": draw_cards(_up(3) if up else 2)
-		"trinh_sat": _log("TODO: trinh_sat effect not yet implemented.")
+		"trinh_sat":
+			_log("Scout: draw 3, keep 1 (simplified: draw 2).")
+			draw_cards(_up(3) if up else 2)
 		"doi_hinh":
 			_gain_block(_up(17) if up else 12)
 			elephant.armor += _up(12) if up else 8
-		"phan_cong": _log("TODO: phan_cong effect not yet implemented.")
+		"phan_cong":
+			_log("Counter: when hit, shoot 5 back (3 turns).")
+			powers_in_play.append("phan_cong")
+			_phan_cong_turns = 3
 		"tap_hop": energy += _up(3) if up else 2
 		"chien_thuat_du_kich":
 			_attack_damage(_up(12) if up else 8, enemy)
 			draw_cards(_up(2) if up else 2)
 		"an_nap": _gain_block(_up(12) if up else 8)
 		"tiep_te": _heal_player(_up(15) if up else 10)
-		"khieu_khich": _log("TODO: khieu_khich effect not yet implemented.")
+		"khieu_khich":
+			_log("Taunt: enemies target elephant 2 turns.")
+			powers_in_play.append("khieu_khich")
+			_khieu_khich_turns = 2
 		"rut_lui":
 			_gain_block(_up(7) if up else 4)
 			draw_cards(_up(1) if up else 1)
-		"tan_cong_phoi_hop": _log("TODO: tan_cong_phoi_hop effect not yet implemented.")
-		"loi_dung_dia_hinh": _log("TODO: loi_dung_dia_hinh effect not yet implemented.")
-		"tinh_than_dan_toc": _log("TODO: tinh_than_dan_toc effect not yet implemented.")
+		"tan_cong_phoi_hop":
+			if has_elephant and elephant != null and elephant.hp > 0:
+				_attack_damage(_up(22) if up else 16, enemy)
+				_log("Coordinated: 16 damage!")
+			else:
+				_attack_damage(_up(12) if up else 8, enemy)
+				_log("Solo: 8 damage.")
+		"loi_dung_dia_hinh":
+			_log("Terrain: +2 Block each turn.")
+			powers_in_play.append("loi_dung_dia_hinh")
+		"tinh_than_dan_toc":
+			_log("Folk Spirit: elephant cards +1 damage.")
+			powers_in_play.append("tinh_than_dan_toc")
 		"ke_hoach": energy += _up(1) if up else 1
-		"bay": _log("TODO: bay effect not yet implemented.")
-		"tieng_trong": _log("TODO: tieng_trong effect not yet implemented.")
+		"bay":
+			_log("Trap: attacker takes 10.")
+			powers_in_play.append("bay")
+			_bay_dmg = _up(15) if up else 10
+		"tieng_trong":
+			player.strength += _up(3) if up else 2
+			events.append({"k": "str_p", "n": _up(3) if up else 2})
+			_log("Drums: +2 Strength!")
 		"nghi_ngoi": _heal_player(_up(22) if up else 15)
 		"quyet_tam": draw_cards(_up(1) if up else 1)
 		"phong_thu_vung": _gain_block(_up(25) if up else 18)
-		"tan_cong_tong_luc": _log("TODO: tan_cong_tong_luc effect not yet implemented.")
-		"hai_ba_trung_legend": _log("TODO: hai_ba_trung_legend effect not yet implemented.")
-		"me_linh": _log("TODO: me_linh effect not yet implemented.")
-		"co_khoi_nghia": _log("TODO: co_khoi_nghia effect not yet implemented.")
-		"voi_trang": _log("TODO: voi_trang effect not yet implemented.")
+		"tan_cong_tong_luc":
+			var d := _up(16) if up else 12
+			_attack_all(d)
+			if has_elephant and elephant != null and elephant.hp > 0:
+				events.append({"k": "elephant_attack_all", "n": 8})
+				_attack_all(8)
+				_log("All-out: %d ALL + elephant 8 ALL!" % d)
+		"hai_ba_trung_legend":
+			_attack_damage(_up(28) if up else 20, enemy)
+			if has_elephant and elephant != null and elephant.hp > 0 and not battle_over:
+				events.append({"k": "elephant_attack", "n": 15})
+				_attack_damage(_up(20) if up else 15, enemy)
+				_log("LEGEND! You 20 + Elephant 15!")
+		"me_linh":
+			_log("Me Linh: elephant heals 5, you +5 Block each turn.")
+			powers_in_play.append("me_linh")
+		"co_khoi_nghia":
+			_log("Uprising: elephant cards cost 1 less.")
+			powers_in_play.append("co_khoi_nghia")
+		"voi_trang":
+			_log("White Elephant joins! (simplified: +40 max HP)")
+			if has_elephant and elephant != null:
+				elephant.max_hp += 40
+				_heal_elephant(40)
 		"ten_than": _attack_damage(_up(42) if up else 30, enemy)
-		"nu_tuong": _log("TODO: nu_tuong effect not yet implemented.")
+		"nu_tuong":
+			energy += 1
+			_elephant_dmg_buff += _up(8) if up else 5
+			_log("General: +1 Energy, elephant +5 dmg!")
 		"quoc_han": _attack_damage(_up(14) if up else 10, enemy)
-		"doc_lap": _log("TODO: doc_lap effect not yet implemented.")
-		"trong_dong": _log("TODO: trong_dong effect not yet implemented.")
-		"loi_the": _log("TODO: loi_the effect not yet implemented.")
+		"doc_lap":
+			_heal_player(999)
+			player.weak = 0
+			player.vulnerable = 0
+			_log("Independence: FULL heal, cleanse!")
+		"trong_dong":
+			for e in enemies:
+				if e.hp > 0:
+					e.hp = maxi(0, e.hp - (_up(20) if up else 15))
+			_gain_block(_up(15) if up else 10)
+			_log("Bronze Drum: 15 ALL, +10 Block!")
+			_check_death()
+		"loi_the":
+			_log("Oath: if elephant dies, +10 Strength.")
+			powers_in_play.append("loi_the")
 		_:
 			_log("Nothing happens. (unimplemented: %s)" % id)
 
