@@ -2921,13 +2921,14 @@ func _animate_card_events(events: Array, card: Dictionary, from_pos: Vector2, ar
 				_float_text(_enemy_center(int(e.get("target", tgt))) + Vector2(0, -40), "+%d" % e["n"], UIH.GREEN, true, true)
 				await _wait(0.25)
 			"weak_e":
-				_float_text(_enemy_center(int(e.get("target", tgt))) + Vector2(0, -80), "Weak +%d" % e["n"], Color("7b7f96"), false, true)
-				await _wait(0.25)
+				# v6.9.1: removed floating text (chip icon already shows it)
+				await _wait(0.15)
 			"weak_p":
-				_float_text(_player_center() + Vector2(0, -40), "Weak +%d" % e["n"], Color("7b7f96"), false, true)
-				await _wait(0.25)
+				# v6.9.1: removed floating text (chip icon already shows it)
+				await _wait(0.15)
 			"vulnerable_e":
-				_float_text(_enemy_center(int(e.get("target", tgt))) + Vector2(0, -80), "Vulnerable +%d" % e["n"], Color(1.0, 0.55, 0.35), false, true)
+				# v6.9.1: removed floating text (chip icon already shows it)
+				await _wait(0.15)
 				await _wait(0.25)
 			"vulnerable_p":
 				_float_text(_player_center() + Vector2(0, -40), "Vulnerable +%d" % e["n"], Color(1.0, 0.55, 0.35), false, true)
@@ -3095,7 +3096,7 @@ func _animate_enemy_events(events: Array) -> void:
 				Sfx.play("armor_gain")
 				await _wait(0.35)
 			"weak_p":
-				_float_text(_player_center(), "Weak +%d" % e["n"], Color("7b7f96"))
+				# v6.9.1: removed floating text
 				Sfx.play("bind")
 				await _wait(0.4)
 			"vulnerable_p":
