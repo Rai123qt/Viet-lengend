@@ -78,11 +78,10 @@ func _refresh() -> void:
 		_refresh_items()
 
 func _refresh_cards() -> void:
-	var db = get_node("/root/CardDB")
-	var cards: Array = db.cards_for_hero(_hero_id)
+	var cards: Array = CardDB.cards_for_hero(_hero_id)
 	cards.sort()
 	for cid in cards:
-		var card: Dictionary = db.CARDS[cid]
+		var card: Dictionary = CardDB.CARDS[cid]
 		var widget := _make_card_entry(cid, card)
 		_grid.add_child(widget)
 
