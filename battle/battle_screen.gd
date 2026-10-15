@@ -1227,8 +1227,9 @@ func _build_energy_cluster() -> void:
 	_discard_pile.mouse_filter = Control.MOUSE_FILTER_STOP
 	_discard_pile.gui_input.connect(_on_pile_tapped.bind("discard"))
 	# v5.7: draw pile bottom-left (Rai: show deck count + draw animation)
+	# v6.8.2: moved up to avoid edge cutoff (was 668)
 	_draw_pile = PileWidget.new("DRAW")
-	_draw_pile.position = Vector2(28, 668)
+	_draw_pile.position = Vector2(28, 640)
 	add_child(_draw_pile)
 	_draw_pile.mouse_filter = Control.MOUSE_FILTER_STOP
 	_draw_pile.gui_input.connect(_on_pile_tapped.bind("draw"))
@@ -2018,116 +2019,121 @@ func _build_pause_btn() -> void:
 	add_child(pb)
 
 
-## v6.8: Top status bar (Indies' Lies-style).
-## Left: portrait + name + HP bar + gold. Right: item slots.
-## Dong Ho folk style: dark red silk bg, bamboo/wood frames.
+## v6.8.2: Top-left status cluster (Indies' Lies-style).
+## Compact corner: large circular avatar + HP/Gold panel, 3 item slots below.
+## Dong Ho style: bamboo/wood frame (not gear).
 func _build_top_bar() -> void:
-	var vw := _vsz().x
-	var bar_h := 76.0
+	var ox := 16.0
+	var oy := 12.0
+	var avatar_sz := 92.0
 	
-	# Background: dark red silk strip
-	var bg := ColorRect.new()
-	bg.color = Color(0.35, 0.12, 0.10, 0.92)  # dark brick red
-	bg.position = Vector2(0, 0)
-	bg.size = Vector2(vw, bar_h)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.z_index = 50
-	add_child(bg)
-	
-	# Gold bottom edge (silk trim)
-	var trim := ColorRect.new()
-	trim.color = Color(0.79, 0.66, 0.42, 0.9)  # ochre gold
-	trim.position = Vector2(0, bar_h - 3)
-	trim.size = Vector2(vw, 3)
-	trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	trim.z_index = 51
-	add_child(trim)
-	
-	var hb := HBoxContainer.new()
-	hb.position = Vector2(12, 8)
-	hb.size = Vector2(vw - 24, bar_h - 16)
-	hb.add_theme_constant_override("separation", 16)
-	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hb.z_index = 52
-	add_child(hb)
-	
-	# --- Portrait (circular, bamboo frame) ---
+	# --- Avatar (large circle, bamboo frame) ---
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
 	var ptex := UIH.try_tex(hero_art)
+	
+	# Bamboo circular frame (drawn as Panel with rounded corners)
+	var frame := PanelContainer.new()
+	var fsb := StyleBoxFlat.new()
+	fsb.bg_color = Color(0.22, 0.16, 0.10, 0.95)  # dark wood
+	fsb.border_color = Color(0.65, 0.52, 0.32)  # bamboo
+	fsb.set_border_width_all(4)
+	fsb.set_corner_radius_all(int(avatar_sz / 2))  # circular
+	frame.add_theme_stylebox_override("panel", fsb)
+	frame.position = Vector2(ox, oy)
+	frame.custom_minimum_size = Vector2(avatar_sz, avatar_sz)
+	frame.size = Vector2(avatar_sz, avatar_sz)
+	frame.z_index = 50
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(frame)
+	
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(60, 60)
+	portrait.custom_minimum_size = Vector2(avatar_sz - 12, avatar_sz - 12)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if ptex:
 		portrait.texture = ptex
-	# TODO: circular mask + bamboo frame (v6.8.1 polish)
-	hb.add_child(portrait)
+	# Center inside frame
+	var pc := CenterContainer.new()
+	pc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pc.add_child(portrait)
+	frame.add_child(pc)
 	
-	# --- Name + HP + Gold (vertical) ---
+	# --- HP/Gold panel (right of avatar) ---
+	var info_x := ox + avatar_sz + 10
+	var panel := PanelContainer.new()
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.18, 0.12, 0.08, 0.92)
+	psb.border_color = Color(0.55, 0.42, 0.28)
+	psb.set_border_width_all(2)
+	psb.set_corner_radius_all(8)
+	psb.content_margin_left = 12
+	psb.content_margin_right = 12
+	psb.content_margin_top = 8
+	psb.content_margin_bottom = 8
+	panel.add_theme_stylebox_override("panel", psb)
+	panel.position = Vector2(info_x, oy + 6)
+	panel.z_index = 50
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(panel)
+	
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 2)
+	vbox.add_theme_constant_override("separation", 4)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hb.add_child(vbox)
+	panel.add_child(vbox)
 	
-	var hero_name := CharacterDB.hero_name(Game.hero_id)
-	var name_l := UIH.label(hero_name, 18, Color(0.95, 0.88, 0.70))
-	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(name_l)
-	
-	# HP bar (bamboo style, compact)
+	# HP row: heart + bar + numbers
 	var hp_hb := HBoxContainer.new()
 	hp_hb.add_theme_constant_override("separation", 8)
 	hp_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(hp_hb)
-	
-	_top_hp_bar = UIH.hp_bar(180, 18)  # reuse bamboo HP bar helper
+	var heart := UIH.label("♥", 18, Color(0.85, 0.25, 0.20))
+	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hp_hb.add_child(heart)
+	_top_hp_bar = UIH.hp_bar(130, 16)
 	hp_hb.add_child(_top_hp_bar)
 	_top_hp_label = UIH.label("", 14, Color(1, 1, 1))
 	_top_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hp_hb.add_child(_top_hp_label)
 	
-	# Gold
+	# Gold row: coin + amount
 	var gold_hb := HBoxContainer.new()
-	gold_hb.add_theme_constant_override("separation", 6)
+	gold_hb.add_theme_constant_override("separation", 8)
 	gold_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(gold_hb)
-	var coin_l := UIH.label("◉", 16, Color(0.91, 0.76, 0.29))  # gold coin icon
-	coin_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gold_hb.add_child(coin_l)
+	var coin := UIH.label("◉", 18, Color(0.91, 0.76, 0.29))
+	coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gold_hb.add_child(coin)
 	_top_gold_label = UIH.label(str(Game.gold), 16, Color(0.91, 0.76, 0.29))
 	_top_gold_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	gold_hb.add_child(_top_gold_label)
 	
-	# Spacer
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hb.add_child(spacer)
-	
-	# --- Item slots (right side) ---
-	var item_hb := HBoxContainer.new()
-	item_hb.add_theme_constant_override("separation", 8)
-	item_hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	item_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hb.add_child(item_hb)
-	
+	# --- Item slots (3 circles below avatar, like Indies' Lies) ---
 	_top_item_slots = []
 	for i in range(3):
 		var slot := Button.new()
-		slot.custom_minimum_size = Vector2(52, 52)
+		var sz := 44.0
+		slot.custom_minimum_size = Vector2(sz, sz)
 		slot.text = ""
-		# Wood frame style
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.25, 0.18, 0.12, 0.9)
-		sb.border_color = Color(0.55, 0.42, 0.28)
-		sb.set_border_width_all(2)
-		sb.set_corner_radius_all(6)
-		slot.add_theme_stylebox_override("normal", sb)
+		var ssb := StyleBoxFlat.new()
+		ssb.bg_color = Color(0.22, 0.16, 0.10, 0.95)
+		ssb.border_color = Color(0.55, 0.42, 0.28)
+		ssb.set_border_width_all(3)
+		ssb.set_corner_radius_all(int(sz / 2))  # circular
+		slot.add_theme_stylebox_override("normal", ssb)
+		# Hover/pressed variants
+		var ssb_h := ssb.duplicate() as StyleBoxFlat
+		ssb_h.border_color = Color(0.79, 0.66, 0.42)
+		slot.add_theme_stylebox_override("hover", ssb_h)
+		slot.add_theme_stylebox_override("pressed", ssb_h)
+		slot.position = Vector2(ox + 8 + i * (sz + 8), oy + avatar_sz + 10)
+		slot.z_index = 50
 		var idx := i
 		slot.pressed.connect(func(): _use_top_item(idx))
-		item_hb.add_child(slot)
+		add_child(slot)
 		_top_item_slots.append(slot)
 	
 	_update_top_bar()
