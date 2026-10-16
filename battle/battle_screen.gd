@@ -1622,6 +1622,7 @@ func _sync_hp() -> void:
 	for i in range(bs.enemies.size()):
 		var f: BattleState.Fighter = bs.enemies[i]
 		(_enemy_strips[i] as HpStrip).set_hp(f.hp, f.max_hp, f.armor)
+	_update_top_bar()  # plaque HP mirrors the HP bar, same timing
 
 
 func _refresh(defer_hp := false) -> void:
@@ -2075,18 +2076,19 @@ func _build_top_bar() -> void:
 	var plaque_h := 110.0  # shrunk from 128
 	
 	# --- Main wooden plaque ---
-	# v6.9.4: Code-drawn wood (texture was stretched/ugly)
-	# Antique dark wood with visible grain lines
+	# v6.9.5: Polished antique wood - rich warm tones, detailed grain, brass inlay
 	var plaque := PanelContainer.new()
 	var psb := StyleBoxFlat.new()
-	psb.bg_color = Color(0.32, 0.21, 0.12, 0.97)  # warm dark wood
-	psb.border_color = Color(0.78, 0.62, 0.34)  # bright brass
+	# Rich mahogany/walnut base
+	psb.bg_color = Color(0.38, 0.24, 0.13, 0.98)
+	# Polished brass border (brighter, more metallic)
+	psb.border_color = Color(0.85, 0.68, 0.38)
 	psb.set_border_width_all(3)
-	psb.set_corner_radius_all(8)
-	# Subtle inner highlight for depth
-	psb.shadow_color = Color(0.15, 0.08, 0.03, 0.6)
-	psb.shadow_size = 6
-	psb.shadow_offset = Vector2(0, 3)
+	psb.set_corner_radius_all(10)
+	# Depth shadow
+	psb.shadow_color = Color(0.1, 0.05, 0.02, 0.7)
+	psb.shadow_size = 8
+	psb.shadow_offset = Vector2(0, 4)
 	plaque.add_theme_stylebox_override("panel", psb)
 	plaque.position = Vector2(ox, oy)
 	plaque.custom_minimum_size = Vector2(plaque_w, plaque_h)
@@ -2095,15 +2097,58 @@ func _build_top_bar() -> void:
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(plaque)
 	
-	# Wood grain lines (thin horizontal, subtle)
-	for gy in [0.25, 0.5, 0.75]:
+	# Inner bevel highlight (top edge light, bottom edge dark) for 3D wood
+	var bevel_top := ColorRect.new()
+	bevel_top.color = Color(0.55, 0.38, 0.22, 0.6)
+	bevel_top.position = Vector2(ox + 3, oy + 3)
+	bevel_top.size = Vector2(plaque_w - 6, 2)
+	bevel_top.z_index = 51
+	bevel_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bevel_top)
+	
+	var bevel_bottom := ColorRect.new()
+	bevel_bottom.color = Color(0.20, 0.12, 0.06, 0.6)
+	bevel_bottom.position = Vector2(ox + 3, oy + plaque_h - 5)
+	bevel_bottom.size = Vector2(plaque_w - 6, 2)
+	bevel_bottom.z_index = 51
+	bevel_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bevel_bottom)
+	
+	# Wood grain: multiple thin lines with varying opacity and slight wave
+	var grain_ys := [0.2, 0.32, 0.45, 0.58, 0.70, 0.82]
+	var grain_opacities := [0.25, 0.35, 0.20, 0.30, 0.25, 0.20]
+	for gi in range(grain_ys.size()):
+		var gy: float = grain_ys[gi]
+		var gop: float = grain_opacities[gi]
 		var grain := ColorRect.new()
-		grain.color = Color(0.25, 0.16, 0.09, 0.5)
-		grain.position = Vector2(ox + 8, oy + plaque_h * gy)
-		grain.size = Vector2(plaque_w - 16, 1.5)
+		grain.color = Color(0.22, 0.13, 0.07, gop)
+		grain.position = Vector2(ox + 10, oy + plaque_h * gy)
+		grain.size = Vector2(plaque_w - 20, 1.2)
 		grain.z_index = 51
 		grain.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(grain)
+	
+	# Brass corner plates (more detailed - with inner dot)
+	for cx in [0, 1]:
+		for cy in [0, 1]:
+			var corner := ColorRect.new()
+			corner.color = Color(0.88, 0.70, 0.40)  # bright brass
+			corner.size = Vector2(14, 14)
+			corner.position = Vector2(
+				ox + (plaque_w - 14 if cx == 1 else 0),
+				oy + (plaque_h - 14 if cy == 1 else 0)
+			)
+			corner.z_index = 52
+			corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			add_child(corner)
+			# Inner rivet dot
+			var rivet := ColorRect.new()
+			rivet.color = Color(0.65, 0.48, 0.25)
+			rivet.size = Vector2(6, 6)
+			rivet.position = corner.position + Vector2(4, 4)
+			rivet.z_index = 53
+			rivet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			add_child(rivet)
 	
 	# Inner margin container
 	var margin := MarginContainer.new()
@@ -2281,14 +2326,11 @@ func _build_top_bar() -> void:
 
 func _update_top_bar() -> void:
 	# Update HP, gold, items in the top bar. Called on state changes.
-	# v6.8.3: top shows text only (Indies' Lies style), bar is under character
-	if _top_hp_label:
-		var hp: int = 80
-		var max_hp: int = 80
-		if Game.get("battle") != null:
-			hp = Game.battle.player_hp
-			max_hp = Game.battle.player_max_hp
-		_top_hp_label.text = "%d / %d" % [hp, max_hp]
+	# v6.8.3: top shows text only (Indies' Lies style), bar is under character.
+	# v6.9.5-fix: read live HP from bs (Game has no `battle` member; the old
+	# Game.battle lookup always missed, leaving the plaque stuck at 80/80).
+	if _top_hp_label and bs != null:
+		_top_hp_label.text = "%d / %d" % [bs.player.hp, bs.player.max_hp]
 	if _top_gold_label:
 		_top_gold_label.text = str(Game.gold)
 	# TODO: update item slot icons (v6.8.1)
@@ -2453,6 +2495,9 @@ func _banner(text: String) -> void:
 func _float_text(pos: Vector2, text: String, color: Color, big := false, pop := false) -> void:
 	var l := UIH.label(text, 36 if big else 24, color)
 	l.add_theme_font_override("font", UIH.font_bold())
+	# v6.9.5: outline for readability (polished games have this)
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	l.add_theme_constant_override("outline_size", 6)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.custom_minimum_size = Vector2(240, 56)
