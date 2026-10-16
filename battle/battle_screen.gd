@@ -469,19 +469,35 @@ func _build_ui() -> void:
 	# feet on the shared ground line FEET_Y; vl2 art first, vl fallback
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	var hero_attack_art := "res://assets/art/vl2/hero_thachsanh_attack.png"
+	var hero_windup_art := "res://assets/art/vl2/hero_thachsanh_windup.png"
+	var hero_release_art := ""
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
 		hero_attack_art = "res://assets/art/vl/hero_haibatrung_attack.png"
+		hero_release_art = "res://assets/art/vl/hero_haibatrung_release.png"
+		hero_windup_art = ""
 	if UIH.try_tex(hero_art) == null:
 		hero_art = "res://assets/art/vl/hero_thachsanh.png"
 	var hero_tex := UIH.try_tex(hero_art)
 	var hero_attack_tex := UIH.try_tex(hero_attack_art)
+	var hero_windup_tex := UIH.try_tex(hero_windup_art)
+	var hero_release_tex := UIH.try_tex(hero_release_art)
 	for pose in ["guard", "slash", "hurt", "cast"]:
 		_pose_tex[pose] = [hero_tex] if hero_tex else []
 	# v6.9.5: real attack frames (Rai: "không có động tác chém hay bắn")
-	if hero_attack_tex:
-		_pose_tex["slash"] = [hero_attack_tex]  # Thach Sanh axe swing
-		_pose_tex["cast"] = [hero_attack_tex]  # HBT bow draw
+	# v6.9.7: multi-frame sequences for smooth animation
+	if Game.hero_id == "hai_ba_trung":
+		# HBT bow: draw -> release
+		if hero_attack_tex and hero_release_tex:
+			_pose_tex["cast"] = [hero_attack_tex, hero_release_tex]
+		elif hero_attack_tex:
+			_pose_tex["cast"] = [hero_attack_tex]
+	else:
+		# Thach Sanh axe: windup -> slash
+		if hero_windup_tex and hero_attack_tex:
+			_pose_tex["slash"] = [hero_windup_tex, hero_attack_tex]
+		elif hero_attack_tex:
+			_pose_tex["slash"] = [hero_attack_tex]
 	# v3.2: shrink ~17% so the fighter stands on the ground, not looming.
 	# v5.9: hero-aware name; sprite art still Thach Sanh until HBT battle sprite ships.
 	_player_sprite = _make_sprite(hero_art, CharacterDB.hero_name(Game.hero_id), Color("2a4a6a"), 175.0, 165.0)
