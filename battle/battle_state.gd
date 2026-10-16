@@ -980,23 +980,23 @@ func preview_card(hand_idx: int) -> Dictionary:
 		return out
 	var base := -1
 	match id:
-		"strike": base = _up(9) if up else 7
-		"wood_axe": base = _up(12) if up else 9
-		"quick_note": base = _up(4) if up else 3
-		"axe_swing": base = _up(9) if up else 7
-		"forest_chop": base = _up(18) if up else 14
-		"double_cut": base = ((_up(5) if up else 4)) * 2
-		"heavy_fell": base = _up(21) if up else 16
-		"piercing_melody": base = (_up(12) if up else 9) if chord_completed else (_up(7) if up else 5)
-		"thunder_crash": base = _up(10) if up else 8
-		"execution": base = _up(29) if up else 22
-		"jab": base = _up(4) if up else 3
-		"heavy_blow": base = _up(16) if up else 12
-		"chain_strike": base = _up(5) if up else 4
-		"crippling_blow": base = _up(9) if up else 7
-		"pommel_strike": base = _up(7) if up else 5
-		"sweeping_cut": base = _up(8) if up else 6
-		"maw": base = _up(23) if up else 18
+		"strike": base = (9 if up else 7)
+		"wood_axe": base = (12 if up else 9)
+		"quick_note": base = (4 if up else 3)
+		"axe_swing": base = (9 if up else 7)
+		"forest_chop": base = (18 if up else 14)
+		"double_cut": base = (((5 if up else 4))) * 2
+		"heavy_fell": base = (21 if up else 16)
+		"piercing_melody": base = ((12 if up else 9)) if chord_completed else ((7 if up else 5))
+		"thunder_crash": base = (10 if up else 8)
+		"execution": base = (29 if up else 22)
+		"jab": base = (4 if up else 3)
+		"heavy_blow": base = (16 if up else 12)
+		"chain_strike": base = (5 if up else 4)
+		"crippling_blow": base = (9 if up else 7)
+		"pommel_strike": base = (7 if up else 5)
+		"sweeping_cut": base = (8 if up else 6)
+		"maw": base = (23 if up else 18)
 	if base >= 0:
 		var raw := calc_attack_damage(base, tgt)
 		out["dmg"] = maxi(0, raw - tgt.armor)
@@ -1008,15 +1008,15 @@ func preview_card(hand_idx: int) -> Dictionary:
 	if out["heal"] > 0:
 		out["heal"] = mini(out["heal"], maxi(0, player.max_hp - player.hp))
 	match id:
-		"defend": out["block"] = _up(7) if up else 5
-		"soft_pluck": out["block"] = _up(4) if up else 3
-		"guard_stance": out["block"] = _up(10) if up else 8
-		"iron_bark": out["block"] = _up(18) if up else 14
-		"deep_breath": out["block"] = _up(5) if up else 4
-		"sturdy_defense": out["block"] = _up(12) if up else 9
-		"brace": out["block"] = _up(4) if up else 3
-		"second_wind": out["block"] = _up(10) if up else 8
-		"fortress": out["block"] = _up(26) if up else 20
+		"defend": out["block"] = (7 if up else 5)
+		"soft_pluck": out["block"] = (4 if up else 3)
+		"guard_stance": out["block"] = (10 if up else 8)
+		"iron_bark": out["block"] = (18 if up else 14)
+		"deep_breath": out["block"] = (5 if up else 4)
+		"sturdy_defense": out["block"] = (12 if up else 9)
+		"brace": out["block"] = (4 if up else 3)
+		"second_wind": out["block"] = (10 if up else 8)
+		"fortress": out["block"] = (26 if up else 20)
 		"last_stand": out["block"] = mini(16 if up else 12, maxi(0, player.max_hp - player.hp))
 	return out
 
@@ -1036,79 +1036,79 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 	_log("Played %s." % CardDB.card_name(card))
 	match id:
 		# ---- ATTACK ----
-		"strike": _attack_damage(_up(9) if up else 7, enemy)
-		"wood_axe": _attack_damage(_up(12) if up else 9, enemy)
-		"quick_note": _attack_damage(_up(4) if up else 3, enemy)
-		"axe_swing": _attack_damage(_up(9) if up else 7, enemy)
-		"forest_chop": _attack_damage(_up(18) if up else 14, enemy)
+		"strike": _attack_damage((9 if up else 7), enemy)
+		"wood_axe": _attack_damage((12 if up else 9), enemy)
+		"quick_note": _attack_damage((4 if up else 3), enemy)
+		"axe_swing": _attack_damage((9 if up else 7), enemy)
+		"forest_chop": _attack_damage((18 if up else 14), enemy)
 		"double_cut":
-			_attack_damage(_up(5) if up else 4, enemy)
+			_attack_damage((5 if up else 4), enemy)
 			if not battle_over:
-				_attack_damage(_up(5) if up else 4, enemy)
-		"heavy_fell": _attack_damage(_up(21) if up else 16, enemy)
+				_attack_damage((5 if up else 4), enemy)
+		"heavy_fell": _attack_damage((21 if up else 16), enemy)
 		"piercing_melody":
-			_attack_damage((_up(12) if up else 9) if chord_completed else (_up(7) if up else 5), enemy)
-		"thunder_crash": _attack_all(_up(10) if up else 8)
-		"execution": _attack_damage(_up(29) if up else 22, enemy)
-		"jab": _attack_damage(_up(4) if up else 3, enemy)
-		"heavy_blow": _attack_damage(_up(16) if up else 12, enemy)
+			_attack_damage(((12 if up else 9)) if chord_completed else ((7 if up else 5)), enemy)
+		"thunder_crash": _attack_all((10 if up else 8))
+		"execution": _attack_damage((29 if up else 22), enemy)
+		"jab": _attack_damage((4 if up else 3), enemy)
+		"heavy_blow": _attack_damage((16 if up else 12), enemy)
 		"chain_strike":
-			_attack_damage(_up(5) if up else 4, enemy)
+			_attack_damage((5 if up else 4), enemy)
 			if enemy.hp <= 0 and not battle_over:
 				energy += 1
 				_log("Chain Strike: +1 energy.")
 		"crippling_blow":
-			_attack_damage(_up(9) if up else 7, enemy)
+			_attack_damage((9 if up else 7), enemy)
 			if not battle_over:
-				_apply_weak(_up(2) if up else 1)
+				_apply_weak((2 if up else 1))
 		"pommel_strike":
-			_attack_damage(_up(7) if up else 5, enemy)
+			_attack_damage((7 if up else 5), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(2) if up else 1)
-		"sweeping_cut": _attack_all(_up(8) if up else 6)
+				_apply_vulnerable((2 if up else 1))
+		"sweeping_cut": _attack_all((8 if up else 6))
 		"maw":
 			var hp_before := enemy.hp
-			_attack_damage(_up(23) if up else 18, enemy)
+			_attack_damage((23 if up else 18), enemy)
 			var dealt := maxi(0, hp_before - enemy.hp)
 			if dealt > 0:
 				_heal_player(maxi(1, int(dealt / 2)))
 		# --- v5.8 Thach Sanh story exclusives ---
 		"python_coil":
-			_attack_damage(_up(16) if up else 12, enemy)
+			_attack_damage((16 if up else 12), enemy)
 			if not battle_over:
-				_apply_weak(_up(2) if up else 1)
+				_apply_weak((2 if up else 1))
 		"eagle_dive":
-			_attack_ignore_block(_up(20) if up else 15, enemy)
-		"woodcutter_swing": _attack_damage(_up(11) if up else 8, enemy)
+			_attack_ignore_block((20 if up else 15), enemy)
+		"woodcutter_swing": _attack_damage((11 if up else 8), enemy)
 		"thach_demon_slayer":
-			_attack_damage(_up(28) if up else 20, enemy)
+			_attack_damage((28 if up else 20), enemy)
 			# Exhaust: remove from combat (don't go to discard)
 			if not battle_over:
 				discard_pile.pop_back()  # remove the just-discarded card
 				_log("Demon Slayer is exhausted.")
 		# --- v5.9 Hai Ba Trung story exclusives ---
-		"elephant_charge": _attack_all(_up(19) if up else 14)
+		"elephant_charge": _attack_all((19 if up else 14))
 		"sisters_fury":
-			var bonus := elephant_cards_this_turn * (_up(7) if up else 5)
-			_attack_damage((_up(14) if up else 10) + bonus, enemy)
+			var bonus := elephant_cards_this_turn * ((7 if up else 5))
+			_attack_damage(((14 if up else 10)) + bonus, enemy)
 			if bonus > 0:
 				_log("Sister's Fury: +%d from Elephant cards this turn!" % bonus)
-		"han_slayer": _attack_damage(_up(24) if up else 18, enemy)
-		"to_dinh_bane": _attack_damage(_up(34) if up else 25, enemy)
+		"han_slayer": _attack_damage((24 if up else 18), enemy)
+		"to_dinh_bane": _attack_damage((34 if up else 25), enemy)
 		"stampede":
-			_attack_all(_up(11) if up else 8)
+			_attack_all((11 if up else 8))
 			if not battle_over:
-				_apply_weak(_up(2) if up else 1, true)
+				_apply_weak((2 if up else 1), true)
 		# ---- SKILL ----
 		# --- v5.8 Thach Sanh story exclusives ---
-		"rice_pot": _heal_player(_up(12) if up else 8)
+		"rice_pot": _heal_player((12 if up else 8))
 		"ly_thong_trick":
-			_damage_enemy_direct(_up(8) if up else 5)
+			_damage_enemy_direct((8 if up else 5))
 			draw_cards(3 if up else 2)
 		"princess_blessing":
-			_heal_player(_up(15) if up else 10)
+			_heal_player((15 if up else 10))
 			_cleanse_debuffs()
-		"stone_dog_guard": _gain_block(_up(16) if up else 12)
+		"stone_dog_guard": _gain_block((16 if up else 12))
 		# --- v5.9 Hai Ba Trung story exclusives ---
 		"trung_sisters":
 			energy += 2
@@ -1116,27 +1116,27 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 			_log("Trung Sisters: +2 Energy.")
 		"war_drum":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				_heal_elephant(_up(15) if up else 10)
-				trample_bonus += _up(6) if up else 4
+				_heal_elephant((15 if up else 10))
+				trample_bonus += (6 if up else 4)
 				_log("War Drum: next trample +%d damage!" % trample_bonus)
 			else:
 				_log("War Drum echoes, but the elephant is gone.")
-		"spear_wall": _gain_block(_up(20) if up else 15)
+		"spear_wall": _gain_block((20 if up else 15))
 		"elephant_armor":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				elephant.armor += _up(28) if up else 20
-				events.append({"k": "block_e", "n": _up(28) if up else 20})
-				_log("War Elephant gains %d Block." % (_up(28) if up else 20))
+				elephant.armor += (28 if up else 20)
+				events.append({"k": "block_e", "n": (28 if up else 20)})
+				_log("War Elephant gains %d Block." % ((28 if up else 20)))
 			else:
 				_log("No elephant to armor.")
 		"rice_provision":
-			_heal_player(_up(16) if up else 12)
-			_heal_elephant(_up(16) if up else 12)
-		"bamboo_spike": _gain_block(_up(11) if up else 8)
+			_heal_player((16 if up else 12))
+			_heal_elephant((16 if up else 12))
+		"bamboo_spike": _gain_block((11 if up else 8))
 		"rebel_cry":
-			player.strength += _up(3) if up else 2
-			events.append({"k": "str_p", "n": _up(3) if up else 2})
-			_log("Rebel Cry: +%d Strength!" % (_up(3) if up else 2))
+			player.strength += (3 if up else 2)
+			events.append({"k": "str_p", "n": (3 if up else 2)})
+			_log("Rebel Cry: +%d Strength!" % ((3 if up else 2)))
 		"victory_horn":
 			if has_elephant and elephant != null and elephant.hp > 0:
 				_elephant_trample()
@@ -1144,67 +1144,67 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 					draw_cards(1)
 			else:
 				_log("Victory Horn sounds, but the elephant is gone.")
-		"defend": _gain_block(_up(7) if up else 5)
+		"defend": _gain_block((7 if up else 5))
 		"grace_note": draw_cards(2 if up else 1)
 		"take_breath":
 			energy += 1
 			_log("+1 energy.")
 			draw_cards(2 if up else 1)
-		"soft_pluck": _gain_block(_up(4) if up else 3)
+		"soft_pluck": _gain_block((4 if up else 3))
 		"tune_up": draw_cards(3 if up else 2)
-		"rice_meal": _heal_player(_up(8) if up else 6)
-		"guard_stance": _gain_block(_up(10) if up else 8)
-		"iron_bark": _gain_block(_up(18) if up else 14)
+		"rice_meal": _heal_player((8 if up else 6))
+		"guard_stance": _gain_block((10 if up else 8))
+		"iron_bark": _gain_block((18 if up else 14))
 		"deep_breath":
-			_gain_block(_up(5) if up else 4)
+			_gain_block((5 if up else 4))
 			draw_cards(1)
-		"sturdy_defense": _gain_block(_up(12) if up else 9)
+		"sturdy_defense": _gain_block((12 if up else 9))
 		"battle_shout":
-			player.strength += _up(3) if up else 2
-			events.append({"k": "strength_p", "n": _up(3) if up else 2})
-			_log("You gain %d Strength." % (_up(3) if up else 2))
-		"lullaby_hum": _apply_weak(_up(3) if up else 2)
-		"magic_rice_pot": _heal_player(_up(16) if up else 12)
-		"sorrowful_tune": _apply_weak(_up(3) if up else 2, true)
+			player.strength += (3 if up else 2)
+			events.append({"k": "strength_p", "n": (3 if up else 2)})
+			_log("You gain %d Strength." % ((3 if up else 2)))
+		"lullaby_hum": _apply_weak((3 if up else 2))
+		"magic_rice_pot": _heal_player((16 if up else 12))
+		"sorrowful_tune": _apply_weak((3 if up else 2), true)
 		"victory_song": draw_cards(3 if up else 2)
 		"encore": draw_cards((4 if chord_completed else 3) if up else (3 if chord_completed else 2))
-		"brace": _gain_block(_up(4) if up else 3)
-		"mark": _apply_vulnerable(_up(2) if up else 1)
+		"brace": _gain_block((4 if up else 3))
+		"mark": _apply_vulnerable((2 if up else 1))
 		"quick_step": draw_cards(2 if up else 1)
 		"sharpen":
-			player.strength += _up(3) if up else 2
-			events.append({"k": "strength_p", "n": _up(3) if up else 2})
-			_log("You gain %d Strength." % (_up(3) if up else 2))
+			player.strength += (3 if up else 2)
+			events.append({"k": "strength_p", "n": (3 if up else 2)})
+			_log("You gain %d Strength." % ((3 if up else 2)))
 		"war_chant":
-			player.strength += _up(3) if up else 2
-			events.append({"k": "strength_p", "n": _up(3) if up else 2})
+			player.strength += (3 if up else 2)
+			events.append({"k": "strength_p", "n": (3 if up else 2)})
 			draw_cards(1)
 		"blood_draw":
 			draw_cards(4 if up else 3)
 			_damage_player(3)
 			_log("Blood Draw: lose 3 HP.")
 		"second_wind":
-			_gain_block(_up(10) if up else 8)
+			_gain_block((10 if up else 8))
 			draw_cards(1)
-		"expose": _apply_vulnerable(_up(3) if up else 2)
+		"expose": _apply_vulnerable((3 if up else 2))
 		"last_stand":
-			_gain_block(mini(_up(16) if up else 12, maxi(0, player.max_hp - player.hp)))
+			_gain_block(mini((16 if up else 12), maxi(0, player.max_hp - player.hp)))
 		"trung_last_stand":
 			if player.hp < player.max_hp * 0.5:
-				_gain_block(_up(28) if up else 20)
-				energy += _up(4) if up else 3
-				_log("Last Stand: +%d Block, +%d Energy!" % [_up(28) if up else 20, _up(4) if up else 3])
+				_gain_block((28 if up else 20))
+				energy += (4 if up else 3)
+				_log("Last Stand: +%d Block, +%d Energy!" % [(28 if up else 20), (4 if up else 3)])
 			else:
-				_gain_block(_up(10) if up else 6)
+				_gain_block((10 if up else 6))
 				_log("Last Stand: HP too high for full effect.")
 		"focus":
-			player.strength += _up(4) if up else 3
-			events.append({"k": "strength_p", "n": _up(4) if up else 3})
-			_log("You gain %d Strength." % (_up(4) if up else 3))
+			player.strength += (4 if up else 3)
+			events.append({"k": "strength_p", "n": (4 if up else 3)})
+			_log("You gain %d Strength." % ((4 if up else 3)))
 		"rally":
-			_heal_player(_up(10) if up else 8)
+			_heal_player((10 if up else 8))
 			draw_cards(1)
-		"fortress": _gain_block(_up(26) if up else 20)
+		"fortress": _gain_block((26 if up else 20))
 		# ---- POWER (grace notes: stay in play for the battle) ----
 		# --- v5.8 Thach Sanh story exclusives ---
 		"lute_echo":
@@ -1222,7 +1222,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		# --- v5.9 Hai Ba Trung story exclusives ---
 		"me_linh_oath":
 			powers_in_play.append("me_linh_oath")
-			me_linh_heal = _up(5) if up else 3
+			me_linh_heal = (5 if up else 3)
 			events.append({"k": "power_p", "id": "me_linh_oath"})
 			_log("ME LINH OATH: War Elephant heals %d HP each turn." % me_linh_heal)
 		"sturdy_strings":
@@ -1238,212 +1238,212 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 			_log("DIVINE LUTE: your 3-note chords need only 2 notes.")
 
 		# ---- LEGENDARY (NEW) ----
-		"demon_slayer": _attack_damage(_up(45) if up else 35, enemy)
+		"demon_slayer": _attack_damage((45 if up else 35), enemy)
 		"storm_wings":
 			for i in range(3):
 				if battle_over: break
-				_attack_all(_up(11) if up else 8)
+				_attack_all((11 if up else 8))
 		"heros_legacy":
-			_gain_block(_up(28) if up else 20)
+			_gain_block((28 if up else 20))
 			_complete_chord_instantly()
 		"thunder_hammer":
-			_attack_damage(_up(32) if up else 25, enemy)
+			_attack_damage((32 if up else 25), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(4) if up else 3)
+				_apply_vulnerable((4 if up else 3))
 		"celestial_army":
-			_gain_block(_up(20) if up else 15)
-			_attack_all(_up(20) if up else 15)
+			_gain_block((20 if up else 15))
+			_attack_all((20 if up else 15))
 		"dragons_heart":
-			_heal_player(_up(20) if up else 15)
-			energy += _up(3) if up else 2
-			_log("+%d energy." % (_up(3) if up else 2))
+			_heal_player((20 if up else 15))
+			energy += (3 if up else 2)
+			_log("+%d energy." % ((3 if up else 2)))
 		"fox_fire":
-			_attack_damage(_up(15) if up else 12, enemy)
+			_attack_damage((15 if up else 12), enemy)
 			if not battle_over:
-				_attack_damage(_up(15) if up else 12, enemy)
+				_attack_damage((15 if up else 12), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(3) if up else 2)
+				_apply_vulnerable((3 if up else 2))
 		"mountains_embrace":
-			_gain_block(_up(40) if up else 30)
-			_gain_block(_up(4) if up else 3)  # plated as bonus block
+			_gain_block((40 if up else 30))
+			_gain_block((4 if up else 3))  # plated as bonus block
 		"fates_thread":
-			draw_cards(_up(6) if up else 5)
+			draw_cards((6 if up else 5))
 			_cost_reduction = 1
 			_log("All cards cost 1 less this turn.")
 		"apocalypse":
-			_attack_damage(_up(65) if up else 50, enemy)
+			_attack_damage((65 if up else 50), enemy)
 			_complete_chord_instantly()
 		# ---- MYTHIC (NEW) ----
 		"thunder_strike":
-			var bonus := (_up(12) if up else 8) if chord_completed else 0
-			_attack_damage((_up(24) if up else 18) + bonus, enemy)
+			var bonus := ((12 if up else 8)) if chord_completed else 0
+			_attack_damage(((24 if up else 18)) + bonus, enemy)
 		"iron_wall":
-			_gain_block(_up(22) if up else 16)
-			draw_cards(_up(3) if up else 2)
+			_gain_block((22 if up else 16))
+			draw_cards((3 if up else 2))
 		"heavens_grace":
-			_heal_player(_up(12) if up else 8)
-			draw_cards(_up(2) if up else 1)
+			_heal_player((12 if up else 8))
+			draw_cards((2 if up else 1))
 		"twin_dragons":
-			_attack_damage(_up(16) if up else 12, enemy)
+			_attack_damage((16 if up else 12), enemy)
 			if not battle_over:
-				_attack_damage(_up(16) if up else 12, enemy)
+				_attack_damage((16 if up else 12), enemy)
 		"phoenix_rebirth":
-			_heal_player(_up(16) if up else 12)
-			_gain_block(_up(16) if up else 12)
+			_heal_player((16 if up else 12))
+			_gain_block((16 if up else 12))
 		"lightning_chain":
 			var hp_before := 0
 			for e in enemies:
 				hp_before += e.hp
-			_attack_all(_up(14) if up else 10)
+			_attack_all((14 if up else 10))
 			var killed := false
 			for e in enemies:
 				if e.hp <= 0 and e.max_hp > 0:
 					killed = true
 			if killed and not battle_over:
-				_attack_all(_up(14) if up else 10)
+				_attack_all((14 if up else 10))
 				_log("Lightning Chain repeats!")
 		"sages_wisdom":
-			draw_cards(_up(4) if up else 3)
+			draw_cards((4 if up else 3))
 			energy += 1
 			_log("+1 energy.")
 		"tigers_fury":
 			for i in range(3):
 				if battle_over: break
-				_attack_damage(_up(11) if up else 8, enemy)
-		"turtles_shell": _gain_block(_up(28) if up else 20)
+				_attack_damage((11 if up else 8), enemy)
+		"turtles_shell": _gain_block((28 if up else 20))
 		"cranes_dance":
-			energy += _up(3) if up else 2
-			_log("+%d energy." % (_up(3) if up else 2))
+			energy += (3 if up else 2)
+			_log("+%d energy." % ((3 if up else 2)))
 			draw_cards(2)
 		"volcano":
-			_attack_all(_up(20) if up else 15)
-			_apply_vulnerable(_up(3) if up else 2, true)
+			_attack_all((20 if up else 15))
+			_apply_vulnerable((3 if up else 2), true)
 		"monsoon_shield":
-			_gain_block(_up(16) if up else 12)
+			_gain_block((16 if up else 12))
 			player.weak = 0
 			player.vulnerable = 0
 			_log("Debuffs cleansed.")
 		"ancestors_blessing":
-			player.strength += _up(8) if up else 5
-			events.append({"k": "strength_p", "n": _up(8) if up else 5})
+			player.strength += (8 if up else 5)
+			events.append({"k": "strength_p", "n": (8 if up else 5)})
 		"serpents_coil":
-			_attack_damage(_up(18) if up else 14, enemy)
+			_attack_damage((18 if up else 14), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(4) if up else 3)
-				_apply_weak(_up(3) if up else 2)
+				_apply_vulnerable((4 if up else 3))
+				_apply_weak((3 if up else 2))
 		"moonlit_sonata":
-			_gain_block(_up(14) if up else 10)
-			draw_cards(_up(3) if up else 2)
-			_heal_player(_up(8) if up else 5)
+			_gain_block((14 if up else 10))
+			draw_cards((3 if up else 2))
+			_heal_player((8 if up else 5))
 
 		# ---- RARE (NEW) ----
 		"executioners_axe":
-			var dmg := _up(22) if up else 16
+			var dmg := (22 if up else 16)
 			if enemy.hp < enemy.max_hp / 2:
 				dmg *= 2
 				_log("Execution!")
 			_attack_damage(dmg, enemy)
 		"bastion":
-			var bonus := skills_played_this_turn * (_up(6) if up else 4)
-			_gain_block((_up(18) if up else 14) + bonus)
+			var bonus := skills_played_this_turn * ((6 if up else 4))
+			_gain_block(((18 if up else 14)) + bonus)
 		"bloodlust":
-			player.strength += _up(6) if up else 4
+			player.strength += (6 if up else 4)
 			bloodlust_hits = 3
-			events.append({"k": "strength_p", "n": _up(6) if up else 4})
+			events.append({"k": "strength_p", "n": (6 if up else 4)})
 		"whirlwind":
-			_attack_all(_up(8) if up else 6)
+			_attack_all((8 if up else 6))
 			if not battle_over:
-				_attack_all(_up(8) if up else 6)
+				_attack_all((8 if up else 6))
 		"meditation":
 			energy += 2
 			_log("+2 energy.")
-			draw_cards(_up(2) if up else 1)
+			draw_cards((2 if up else 1))
 			_heal_player(-3)
-		"piercing_arrow": _attack_damage(_up(26) if up else 20, enemy)  # ignores block via direct hp
+		"piercing_arrow": _attack_damage((26 if up else 20), enemy)  # ignores block via direct hp
 		"stone_skin":
-			_gain_block(_up(11) if up else 8)
-			_gain_block(_up(3) if up else 2)
+			_gain_block((11 if up else 8))
+			_gain_block((3 if up else 2))
 		"frenzy":
-			_attack_damage(_up(8) if up else 5, enemy)
+			_attack_damage((8 if up else 5), enemy)
 			frenzy_replay = true
 		"tactical_retreat":
-			_gain_block(_up(14) if up else 10)
+			_gain_block((14 if up else 10))
 			draw_cards(2)
 			# discard 1 handled by UI
 		"venom_blade":
-			_attack_damage(_up(11) if up else 8, enemy)
+			_attack_damage((11 if up else 8), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(6) if up else 4)
+				_apply_vulnerable((6 if up else 4))
 		"war_drums":
 			energy += 1
-			next_chord_bonus = _up(15) if up else 10
+			next_chord_bonus = (15 if up else 10)
 			_log("Next chord +%d damage." % next_chord_bonus)
 		"guardian_spirit":
-			_gain_block(_up(16) if up else 12)
-			_heal_player(_up(9) if up else 6)
-		"meteor_fall": _attack_damage(_up(36) if up else 28, enemy)
+			_gain_block((16 if up else 12))
+			_heal_player((9 if up else 6))
+		"meteor_fall": _attack_damage((36 if up else 28), enemy)
 		"shadow_step":
-			_gain_block(_up(9) if up else 6)
-			draw_cards(_up(2) if up else 1)
+			_gain_block((9 if up else 6))
+			draw_cards((2 if up else 1))
 		"rallying_cry":
-			draw_cards(_up(4) if up else 3)
+			draw_cards((4 if up else 3))
 		"earthquake":
-			_attack_all(_up(16) if up else 12)
-			_apply_weak(_up(2) if up else 1, true)
+			_attack_all((16 if up else 12))
+			_apply_weak((2 if up else 1), true)
 		# ---- UNCOMMON (NEW) ----
-		"heavy_smash": _attack_damage(_up(18) if up else 14, enemy)
-		"quick_guard": _gain_block(_up(7) if up else 4)
+		"heavy_smash": _attack_damage((18 if up else 14), enemy)
+		"quick_guard": _gain_block((7 if up else 4))
 		"double_strike":
-			_attack_damage(_up(7) if up else 5, enemy)
+			_attack_damage((7 if up else 5), enemy)
 			if not battle_over:
-				_attack_damage(_up(7) if up else 5, enemy)
-		"battle_focus": draw_cards(_up(3) if up else 2)
-		"cleave": _attack_all(_up(14) if up else 10)
-		"reinforce": _gain_block(_up(12) if up else 9)
+				_attack_damage((7 if up else 5), enemy)
+		"battle_focus": draw_cards((3 if up else 2))
+		"cleave": _attack_all((14 if up else 10))
+		"reinforce": _gain_block((12 if up else 9))
 		"poison_dart":
-			_attack_damage(_up(8) if up else 6, enemy)
+			_attack_damage((8 if up else 6), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(4) if up else 3)
+				_apply_vulnerable((4 if up else 3))
 		"renewed_vigor":
-			_heal_player(_up(9) if up else 6)
-			_gain_block(_up(9) if up else 6)
+			_heal_player((9 if up else 6))
+			_gain_block((9 if up else 6))
 		"swift_melody":
-			draw_cards(_up(2) if up else 1)
+			draw_cards((2 if up else 1))
 			energy += 1
 		"crushing_blow":
-			_attack_damage(_up(16) if up else 12, enemy)
+			_attack_damage((16 if up else 12), enemy)
 			if not battle_over:
-				_apply_vulnerable(_up(2) if up else 1)
-		"barrier": _gain_block(_up(17) if up else 13)
+				_apply_vulnerable((2 if up else 1))
+		"barrier": _gain_block((17 if up else 13))
 		# --- v6.7 70 new HBT cards ---
-		"arrow_shot": _attack_damage(_up(10) if up else 7, enemy)
+		"arrow_shot": _attack_damage((10 if up else 7), enemy)
 		"double_shot":
-			_attack_damage(_up(6) if up else 4, enemy)
-			if not battle_over: _attack_damage(_up(6) if up else 4, enemy)
-		"piercing_arrow_hbt": _attack_damage(_up(16) if up else 12, enemy)
-		"rain_of_arrows": _attack_all(_up(8) if up else 5)
-		"sniper_shot": _attack_damage(_up(14) if up else 10, enemy)
+			_attack_damage((6 if up else 4), enemy)
+			if not battle_over: _attack_damage((6 if up else 4), enemy)
+		"piercing_arrow_hbt": _attack_damage((16 if up else 12), enemy)
+		"rain_of_arrows": _attack_all((8 if up else 5))
+		"sniper_shot": _attack_damage((14 if up else 10), enemy)
 		"rapid_fire":
-			_attack_damage(_up(5) if up else 3, enemy)
-			draw_cards(_up(1) if up else 1)
-		"fire_arrow": _attack_damage(_up(11) if up else 8, enemy)
-		"ice_arrow": _attack_damage(_up(9) if up else 6, enemy)
-		"explosive_arrow": _attack_all(_up(24) if up else 18)
+			_attack_damage((5 if up else 3), enemy)
+			draw_cards((1 if up else 1))
+		"fire_arrow": _attack_damage((11 if up else 8), enemy)
+		"ice_arrow": _attack_damage((9 if up else 6), enemy)
+		"explosive_arrow": _attack_all((24 if up else 18))
 		"eagle_eye":
 			_log("Eagle Eye: bow attacks +3 damage.")
 			powers_in_play.append("eagle_eye")
-		"arrow_storm": _attack_damage(_up(6) if up else 4, enemy)
+		"arrow_storm": _attack_damage((6 if up else 4), enemy)
 		"hunters_mark":
 			_log("Hunter's Mark: next attack +8 damage.")
-			next_attack_bonus += _up(12) if up else 8
-		"long_range": _attack_damage(_up(19) if up else 14, enemy)
-		"triple_volley": _attack_damage(_up(9) if up else 6, enemy)
+			next_attack_bonus += (12 if up else 8)
+		"long_range": _attack_damage((19 if up else 14), enemy)
+		"triple_volley": _attack_damage((9 if up else 6), enemy)
 		"phoenix_arrow":
-			_attack_damage(_up(34) if up else 25, enemy)
-			energy += _up(2) if up else 1
+			_attack_damage((34 if up else 25), enemy)
+			energy += (2 if up else 1)
 		"voi_xung_phong":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				var dmg := _up(19) if up else 14
+				var dmg := (19 if up else 14)
 				events.append({"k": "elephant_attack", "n": dmg})
 				_attack_damage(dmg, enemy)
 				_log("War Elephant CHARGES! %d damage!" % dmg)
@@ -1451,7 +1451,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 				_log("No elephant to charge!")
 		"voi_giam":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				var dmg := _up(14) if up else 10
+				var dmg := (14 if up else 10)
 				events.append({"k": "elephant_attack_all", "n": dmg})
 				_attack_all(dmg)
 				_log("War Elephant TRAMPLES! %d to ALL!" % dmg)
@@ -1464,11 +1464,11 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"voi_thinh_no":
 			_log("War Cry: elephant +6 damage for 2 turns.")
 			powers_in_play.append("voi_thinh_no")
-			_elephant_dmg_buff += _up(9) if up else 6
+			_elephant_dmg_buff += (9 if up else 6)
 			_voi_thinh_no_turns = 2
 		"voi_quat_voi":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				var dmg := _up(12) if up else 8
+				var dmg := (12 if up else 8)
 				events.append({"k": "elephant_attack", "n": dmg})
 				_attack_damage(dmg, enemy)
 				if not battle_over:
@@ -1478,7 +1478,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 				_log("No elephant!")
 		"voi_dam_chan":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				var dmg := _up(6) if up else 4
+				var dmg := (6 if up else 4)
 				events.append({"k": "elephant_attack_all", "n": dmg})
 				_attack_all(dmg)
 				_log("Elephant STOMPS! %d to ALL!" % dmg)
@@ -1492,7 +1492,7 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 				_log("No elephant!")
 		"voi_huc_do":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				var dmg := _up(22) if up else 16
+				var dmg := (22 if up else 16)
 				events.append({"k": "elephant_attack", "n": dmg})
 				# Destroy block first
 				if enemy.block > 0:
@@ -1519,40 +1519,40 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 			events.append({"k": "weak_all"})
 		"voi_lao_toi":
 			_log("Advance: elephant next hit +8.")
-			_elephant_dmg_buff += _up(12) if up else 8
+			_elephant_dmg_buff += (12 if up else 8)
 		"suc_manh_rung":
 			if has_elephant and elephant != null:
-				elephant.max_hp += _up(20) if up else 15
-				_heal_elephant(_up(20) if up else 15)
+				elephant.max_hp += (20 if up else 15)
+				_heal_elephant((20 if up else 15))
 				_log("Jungle Strength: elephant +15 max HP, heal 15!")
 		"voi_than":
 			if has_elephant and elephant != null and elephant.hp > 0:
 				events.append({"k": "elephant_attack_all", "n": 20})
-				_attack_all(_up(28) if up else 20)
+				_attack_all((28 if up else 20))
 				_log("GOD ELEPHANT! 20 to ALL, invincible 1 turn!")
 				powers_in_play.append("voi_than_invuln")
 		"hop_suc":
-			var d1 := _up(12) if up else 8
+			var d1 := (12 if up else 8)
 			_attack_damage(d1, enemy)
 			if has_elephant and elephant != null and elephant.hp > 0 and not battle_over:
 				events.append({"k": "elephant_attack", "n": d1})
 				_attack_damage(d1, enemy)
 				_log("Combined: you %d + elephant %d!" % [d1, d1])
-		"cham_voi": _heal_elephant(_up(17) if up else 12)
-		"giap_voi": elephant.armor += _up(28) if up else 20
+		"cham_voi": _heal_elephant((17 if up else 12))
+		"giap_voi": elephant.armor += (28 if up else 20)
 		"duong_suc":
 			_log("Nurture: elephant +4 permanent damage.")
-			_elephant_perm_dmg += _up(6) if up else 4
+			_elephant_perm_dmg += (6 if up else 4)
 		"thuoc_voi":
-			draw_cards(_up(1) if up else 1)
-			_heal_elephant(_up(9) if up else 6)
+			draw_cards((1 if up else 1))
+			_heal_elephant((9 if up else 6))
 		"yeu_thuong":
-			_heal_player(_up(12) if up else 8)
-			_heal_elephant(_up(12) if up else 8)
+			_heal_player((12 if up else 8))
+			_heal_elephant((12 if up else 8))
 			_log("Care: heal 8 both!")
 		"boc_thep":
 			if has_elephant and elephant != null:
-				elephant.max_hp += _up(40) if up else 30
+				elephant.max_hp += (40 if up else 30)
 				_log("Steel Hide: elephant +30 max HP!")
 		"tinh_than_thep":
 			_log("Steel Spirit: elephant immune to debuffs.")
@@ -1570,36 +1570,36 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"mat_ngot":
 			_log("Sweet: +1 Energy each turn.")
 			powers_in_play.append("mat_ngot")
-		"ten_lenh": draw_cards(_up(3) if up else 2)
+		"ten_lenh": draw_cards((3 if up else 2))
 		"trinh_sat":
 			_log("Scout: draw 3, keep 1 (simplified: draw 2).")
-			draw_cards(_up(3) if up else 2)
+			draw_cards((3 if up else 2))
 		"doi_hinh":
-			_gain_block(_up(17) if up else 12)
-			elephant.armor += _up(12) if up else 8
+			_gain_block((17 if up else 12))
+			elephant.armor += (12 if up else 8)
 		"phan_cong":
 			_log("Counter: when hit, shoot 5 back (3 turns).")
 			powers_in_play.append("phan_cong")
 			_phan_cong_turns = 3
-		"tap_hop": energy += _up(3) if up else 2
+		"tap_hop": energy += (3 if up else 2)
 		"chien_thuat_du_kich":
-			_attack_damage(_up(12) if up else 8, enemy)
-			draw_cards(_up(2) if up else 2)
-		"an_nap": _gain_block(_up(12) if up else 8)
-		"tiep_te": _heal_player(_up(15) if up else 10)
+			_attack_damage((12 if up else 8), enemy)
+			draw_cards((2 if up else 2))
+		"an_nap": _gain_block((12 if up else 8))
+		"tiep_te": _heal_player((15 if up else 10))
 		"khieu_khich":
 			_log("Taunt: enemies target elephant 2 turns.")
 			powers_in_play.append("khieu_khich")
 			_khieu_khich_turns = 2
 		"rut_lui":
-			_gain_block(_up(7) if up else 4)
-			draw_cards(_up(1) if up else 1)
+			_gain_block((7 if up else 4))
+			draw_cards((1 if up else 1))
 		"tan_cong_phoi_hop":
 			if has_elephant and elephant != null and elephant.hp > 0:
-				_attack_damage(_up(22) if up else 16, enemy)
+				_attack_damage((22 if up else 16), enemy)
 				_log("Coordinated: 16 damage!")
 			else:
-				_attack_damage(_up(12) if up else 8, enemy)
+				_attack_damage((12 if up else 8), enemy)
 				_log("Solo: 8 damage.")
 		"loi_dung_dia_hinh":
 			_log("Terrain: +2 Block each turn.")
@@ -1607,30 +1607,30 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"tinh_than_dan_toc":
 			_log("Folk Spirit: elephant cards +1 damage.")
 			powers_in_play.append("tinh_than_dan_toc")
-		"ke_hoach": energy += _up(1) if up else 1
+		"ke_hoach": energy += (1 if up else 1)
 		"bay":
 			_log("Trap: attacker takes 10.")
 			powers_in_play.append("bay")
-			_bay_dmg = _up(15) if up else 10
+			_bay_dmg = (15 if up else 10)
 		"tieng_trong":
-			player.strength += _up(3) if up else 2
-			events.append({"k": "str_p", "n": _up(3) if up else 2})
+			player.strength += (3 if up else 2)
+			events.append({"k": "str_p", "n": (3 if up else 2)})
 			_log("Drums: +2 Strength!")
-		"nghi_ngoi": _heal_player(_up(22) if up else 15)
-		"quyet_tam": draw_cards(_up(1) if up else 1)
-		"phong_thu_vung": _gain_block(_up(25) if up else 18)
+		"nghi_ngoi": _heal_player((22 if up else 15))
+		"quyet_tam": draw_cards((1 if up else 1))
+		"phong_thu_vung": _gain_block((25 if up else 18))
 		"tan_cong_tong_luc":
-			var d := _up(16) if up else 12
+			var d := (16 if up else 12)
 			_attack_all(d)
 			if has_elephant and elephant != null and elephant.hp > 0:
 				events.append({"k": "elephant_attack_all", "n": 8})
 				_attack_all(8)
 				_log("All-out: %d ALL + elephant 8 ALL!" % d)
 		"hai_ba_trung_legend":
-			_attack_damage(_up(28) if up else 20, enemy)
+			_attack_damage((28 if up else 20), enemy)
 			if has_elephant and elephant != null and elephant.hp > 0 and not battle_over:
 				events.append({"k": "elephant_attack", "n": 15})
-				_attack_damage(_up(20) if up else 15, enemy)
+				_attack_damage((20 if up else 15), enemy)
 				_log("LEGEND! You 20 + Elephant 15!")
 		"me_linh":
 			_log("Me Linh: elephant heals 5, you +5 Block each turn.")
@@ -1643,12 +1643,12 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 			if has_elephant and elephant != null:
 				elephant.max_hp += 40
 				_heal_elephant(40)
-		"ten_than": _attack_damage(_up(42) if up else 30, enemy)
+		"ten_than": _attack_damage((42 if up else 30), enemy)
 		"nu_tuong":
 			energy += 1
-			_elephant_dmg_buff += _up(8) if up else 5
+			_elephant_dmg_buff += (8 if up else 5)
 			_log("General: +1 Energy, elephant +5 dmg!")
-		"quoc_han": _attack_damage(_up(14) if up else 10, enemy)
+		"quoc_han": _attack_damage((14 if up else 10), enemy)
 		"doc_lap":
 			_heal_player(999)
 			player.weak = 0
@@ -1657,8 +1657,8 @@ func _apply_card_effect(card: Dictionary, ctype: String) -> void:
 		"trong_dong":
 			for e in enemies:
 				if e.hp > 0:
-					e.hp = maxi(0, e.hp - (_up(20) if up else 15))
-			_gain_block(_up(15) if up else 10)
+					e.hp = maxi(0, e.hp - ((20 if up else 15)))
+			_gain_block((15 if up else 10))
 			_log("Bronze Drum: 15 ALL, +10 Block!")
 			_check_death()
 		"loi_the":

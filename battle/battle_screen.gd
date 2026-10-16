@@ -255,6 +255,7 @@ var _top_gold_label: Label
 var _top_item_slots: Array = []
 var _top_dura_slots: Array = []  # v6.9.2: weapon durability
 var _top_weapon_slot: Button = null  # v6.9.2
+var _top_relic_box: HBoxContainer = null  # v6.9.12: relics in plaque
 var _energy_coin_label: Label = null  # v6.9.2: energy coin at bottom-left
 var _end_btn: Button
 var _float_layer: Control
@@ -1181,19 +1182,21 @@ func _build_command_panel() -> void:
 
 
 func _refresh_relics() -> void:
-	if _relic_box == null:
+	# v6.9.12: use plaque relic box (old one was in hidden panel)
+	var box := _top_relic_box if _top_relic_box else _relic_box
+	if box == null:
 		return
-	for c in _relic_box.get_children():
+	for c in box.get_children():
 		c.queue_free()
 	for rid in Game.relics:
 		var rdef: Dictionary = GameState.RELICS.get(rid, {})
 		var icon_path := str(rdef.get("icon", ""))
 		var tex := UIH.try_tex(icon_path) if icon_path != "" else null
-		var btn := UIH.icon_btn(tex, str(rdef.get("name", rid)), 36.0)
+		var btn := UIH.icon_btn(tex, str(rdef.get("name", rid)), 32.0)
 		var ib := btn as IconButton
 		ib.tip_title = str(rdef.get("name", rid))
 		ib.tip_desc = str(rdef.get("desc", ""))
-		_relic_box.add_child(btn)
+		box.add_child(btn)
 
 
 ## v5.9: Simple war elephant drawn in code (no art asset yet).
@@ -2298,6 +2301,13 @@ func _build_top_bar() -> void:
 	item_hb.add_theme_constant_override("separation", 10)
 	item_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mid_vb.add_child(item_hb)
+	
+	# v6.9.12: Relic row (moved from hidden cmd_panel - Rai couldn't see relics)
+	var relic_hb := HBoxContainer.new()
+	relic_hb.add_theme_constant_override("separation", 6)
+	relic_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mid_vb.add_child(relic_hb)
+	_top_relic_box = relic_hb
 	
 	_top_item_slots = []
 	for i in range(3):
