@@ -470,42 +470,58 @@ func _build_ui() -> void:
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	var hero_attack_art := "res://assets/art/vl2/hero_thachsanh_attack.png"
 	var hero_windup_art := "res://assets/art/vl2/hero_thachsanh_windup.png"
+	var hero_windup2_art := "res://assets/art/vl2/hero_thachsanh_windup2.png"
 	var hero_midswing_art := "res://assets/art/vl2/hero_thachsanh_midswing.png"
+	var hero_recover_art := "res://assets/art/vl2/hero_thachsanh_recover.png"
 	var hero_release_art := ""
 	var hero_aim_art := ""
+	var hero_draw2_art := ""
+	var hero_recover_hbt_art := ""
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
 		hero_attack_art = "res://assets/art/vl/hero_haibatrung_attack.png"
 		hero_release_art = "res://assets/art/vl/hero_haibatrung_release.png"
 		hero_aim_art = "res://assets/art/vl/hero_haibatrung_aim.png"
+		hero_draw2_art = "res://assets/art/vl/hero_haibatrung_draw2.png"
+		hero_recover_hbt_art = "res://assets/art/vl/hero_haibatrung_recover.png"
 		hero_windup_art = ""
+		hero_windup2_art = ""
 		hero_midswing_art = ""
+		hero_recover_art = ""
 	if UIH.try_tex(hero_art) == null:
 		hero_art = "res://assets/art/vl/hero_thachsanh.png"
 	var hero_tex := UIH.try_tex(hero_art)
 	var hero_attack_tex := UIH.try_tex(hero_attack_art)
 	var hero_windup_tex := UIH.try_tex(hero_windup_art)
+	var hero_windup2_tex := UIH.try_tex(hero_windup2_art)
 	var hero_midswing_tex := UIH.try_tex(hero_midswing_art)
+	var hero_recover_tex := UIH.try_tex(hero_recover_art)
 	var hero_release_tex := UIH.try_tex(hero_release_art)
 	var hero_aim_tex := UIH.try_tex(hero_aim_art)
+	var hero_draw2_tex := UIH.try_tex(hero_draw2_art)
+	var hero_recover_hbt_tex := UIH.try_tex(hero_recover_hbt_art)
 	for pose in ["guard", "slash", "hurt", "cast"]:
 		_pose_tex[pose] = [hero_tex] if hero_tex else []
 	# v6.9.5: real attack frames (Rai: "không có động tác chém hay bắn")
-	# v6.9.7: multi-frame sequences for smooth animation (4 frames each)
+	# v6.9.9: 6-frame sequences for buttery smooth animation
 	if Game.hero_id == "hai_ba_trung":
-		# HBT bow: draw -> aim -> release (3 frames)
+		# HBT bow: draw2 -> draw -> aim -> release -> recover (5 frames)
 		var cast_frames := []
+		if hero_draw2_tex: cast_frames.append(hero_draw2_tex)
 		if hero_attack_tex: cast_frames.append(hero_attack_tex)
 		if hero_aim_tex: cast_frames.append(hero_aim_tex)
 		if hero_release_tex: cast_frames.append(hero_release_tex)
+		if hero_recover_hbt_tex: cast_frames.append(hero_recover_hbt_tex)
 		if not cast_frames.is_empty():
 			_pose_tex["cast"] = cast_frames
 	else:
-		# Thach Sanh axe: windup -> midswing -> slash (3 frames)
+		# Thach Sanh axe: windup2 -> windup -> midswing -> slash -> recover (5 frames)
 		var slash_frames := []
+		if hero_windup2_tex: slash_frames.append(hero_windup2_tex)
 		if hero_windup_tex: slash_frames.append(hero_windup_tex)
 		if hero_midswing_tex: slash_frames.append(hero_midswing_tex)
 		if hero_attack_tex: slash_frames.append(hero_attack_tex)
+		if hero_recover_tex: slash_frames.append(hero_recover_tex)
 		if not slash_frames.is_empty():
 			_pose_tex["slash"] = slash_frames
 	# v3.2: shrink ~17% so the fighter stands on the ground, not looming.
