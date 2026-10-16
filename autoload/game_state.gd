@@ -235,8 +235,10 @@ func remove_card_at(idx: int) -> void:
 
 
 func upgrade_card_at(idx: int) -> void:
+	# v6.9.13: prevent double-upgrade (Rai: card đã upgrade rồi thì thôi)
 	if idx >= 0 and idx < deck.size():
-		deck[idx]["upgraded"] = true
+		if not deck[idx].get("upgraded", false):
+			deck[idx]["upgraded"] = true
 
 
 func deck_count(card_id: String) -> int:
