@@ -2075,25 +2075,39 @@ func _build_top_bar() -> void:
 	
 	# --- Main wooden plaque ---
 	var plaque := PanelContainer.new()
-	var psb := StyleBoxFlat.new()
-	psb.bg_color = Color(0.28, 0.19, 0.12, 0.96)  # dark antique wood
-	psb.border_color = Color(0.72, 0.58, 0.32)  # brass
-	psb.set_border_width_all(3)
-	psb.set_corner_radius_all(10)
-	# Wood grain effect via shadow
-	psb.shadow_color = Color(0, 0, 0, 0.4)
-	psb.shadow_size = 8
-	psb.content_margin_left = 14
-	psb.content_margin_right = 14
-	psb.content_margin_top = 10
-	psb.content_margin_bottom = 10
-	plaque.add_theme_stylebox_override("panel", psb)
+	var psb := StyleBoxTexture.new()
+	var wood_tex := UIH.try_tex("res://assets/art/vl3/btn-wood-plaque.png")
+	if wood_tex:
+		psb.texture = wood_tex
+	else:
+		# Fallback to flat color if texture missing
+		var flat := StyleBoxFlat.new()
+		flat.bg_color = Color(0.35, 0.24, 0.14, 0.96)
+		flat.border_color = Color(0.72, 0.58, 0.32)
+		flat.set_border_width_all(3)
+		flat.set_corner_radius_all(10)
+		plaque.add_theme_stylebox_override("panel", flat)
+	if wood_tex:
+		plaque.add_theme_stylebox_override("panel", psb)
+	# Content margins
+	plaque.add_theme_constant_override("separation", 0)
+	# Note: StyleBoxTexture doesn't have content margins, so we wrap in margin
 	plaque.position = Vector2(ox, oy)
 	plaque.custom_minimum_size = Vector2(plaque_w, plaque_h)
 	plaque.size = Vector2(plaque_w, plaque_h)
 	plaque.z_index = 50
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(plaque)
+	
+	# Inner margin container
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plaque.add_child(margin)
 	
 	# Brass corner accents (4 small squares)
 	for cx in [0, 1]:
@@ -2112,7 +2126,7 @@ func _build_top_bar() -> void:
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 14)
 	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plaque.add_child(hb)
+	margin.add_child(hb)
 	
 	# --- LEFT: Avatar (large, brass engraved frame) ---
 	var avatar_sz := 100.0
@@ -2238,7 +2252,7 @@ func _build_top_bar() -> void:
 	var wsz := 64.0
 	wslot.custom_minimum_size = Vector2(wsz, wsz)
 	wslot.text = "🪓"  # axe emoji as placeholder
-	wslot.add_theme_font_override("font_size", 32)
+	wslot.add_theme_font_size_override("font_size", 32)
 	var wsb := StyleBoxFlat.new()
 	wsb.bg_color = Color(0.20, 0.14, 0.08, 1.0)
 	wsb.border_color = Color(0.75, 0.60, 0.32)

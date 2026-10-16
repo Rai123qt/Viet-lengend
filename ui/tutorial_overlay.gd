@@ -238,8 +238,8 @@ func _show_popup(s: Dictionary) -> void:
 	var vs := get_viewport_rect().size
 	if vs.x <= 0:
 		vs = Vector2(1280, 720)
-	# v6.0: intro popup on right side so hero (left) stays visible
-	var pos := Vector2(vs.x - ps.x - 40, (vs.y - ps.y) / 2)
+	# v6.9.2: centered (was right side, Rai: "lệch 1 bên")
+	var pos := Vector2((vs.x - ps.x) / 2, (vs.y - ps.y) / 2)
 
 	if target_rect.size.x > 0:
 		var target_center := target_rect.get_center()
