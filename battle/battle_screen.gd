@@ -470,34 +470,44 @@ func _build_ui() -> void:
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	var hero_attack_art := "res://assets/art/vl2/hero_thachsanh_attack.png"
 	var hero_windup_art := "res://assets/art/vl2/hero_thachsanh_windup.png"
+	var hero_midswing_art := "res://assets/art/vl2/hero_thachsanh_midswing.png"
 	var hero_release_art := ""
+	var hero_aim_art := ""
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
 		hero_attack_art = "res://assets/art/vl/hero_haibatrung_attack.png"
 		hero_release_art = "res://assets/art/vl/hero_haibatrung_release.png"
+		hero_aim_art = "res://assets/art/vl/hero_haibatrung_aim.png"
 		hero_windup_art = ""
+		hero_midswing_art = ""
 	if UIH.try_tex(hero_art) == null:
 		hero_art = "res://assets/art/vl/hero_thachsanh.png"
 	var hero_tex := UIH.try_tex(hero_art)
 	var hero_attack_tex := UIH.try_tex(hero_attack_art)
 	var hero_windup_tex := UIH.try_tex(hero_windup_art)
+	var hero_midswing_tex := UIH.try_tex(hero_midswing_art)
 	var hero_release_tex := UIH.try_tex(hero_release_art)
+	var hero_aim_tex := UIH.try_tex(hero_aim_art)
 	for pose in ["guard", "slash", "hurt", "cast"]:
 		_pose_tex[pose] = [hero_tex] if hero_tex else []
 	# v6.9.5: real attack frames (Rai: "không có động tác chém hay bắn")
-	# v6.9.7: multi-frame sequences for smooth animation
+	# v6.9.7: multi-frame sequences for smooth animation (4 frames each)
 	if Game.hero_id == "hai_ba_trung":
-		# HBT bow: draw -> release
-		if hero_attack_tex and hero_release_tex:
-			_pose_tex["cast"] = [hero_attack_tex, hero_release_tex]
-		elif hero_attack_tex:
-			_pose_tex["cast"] = [hero_attack_tex]
+		# HBT bow: draw -> aim -> release (3 frames)
+		var cast_frames := []
+		if hero_attack_tex: cast_frames.append(hero_attack_tex)
+		if hero_aim_tex: cast_frames.append(hero_aim_tex)
+		if hero_release_tex: cast_frames.append(hero_release_tex)
+		if not cast_frames.is_empty():
+			_pose_tex["cast"] = cast_frames
 	else:
-		# Thach Sanh axe: windup -> slash
-		if hero_windup_tex and hero_attack_tex:
-			_pose_tex["slash"] = [hero_windup_tex, hero_attack_tex]
-		elif hero_attack_tex:
-			_pose_tex["slash"] = [hero_attack_tex]
+		# Thach Sanh axe: windup -> midswing -> slash (3 frames)
+		var slash_frames := []
+		if hero_windup_tex: slash_frames.append(hero_windup_tex)
+		if hero_midswing_tex: slash_frames.append(hero_midswing_tex)
+		if hero_attack_tex: slash_frames.append(hero_attack_tex)
+		if not slash_frames.is_empty():
+			_pose_tex["slash"] = slash_frames
 	# v3.2: shrink ~17% so the fighter stands on the ground, not looming.
 	# v5.9: hero-aware name; sprite art still Thach Sanh until HBT battle sprite ships.
 	_player_sprite = _make_sprite(hero_art, CharacterDB.hero_name(Game.hero_id), Color("2a4a6a"), 175.0, 165.0)
