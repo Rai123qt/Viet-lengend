@@ -703,7 +703,14 @@ func _build_enemies() -> void:
 		if not use_vl2:
 			eart = eart_vl
 		var etex := UIH.try_tex(eart)
-		_enemy_pose_tex.append({"idle": etex, "attack": etex, "hurt": etex})
+		# v6.9.10: load attack frame if exists (Rai: enemy cần động tác đánh)
+		var eattack_art := eart.get_basename() + "_attack.png"
+		var eattack_tex := UIH.try_tex(eattack_art)
+		# Fallback: try vl/ if vl2/ doesn't have it
+		if eattack_tex == null and eart.begins_with("res://assets/art/vl2/"):
+			eattack_art = "res://assets/art/vl/" + eart_vl.get_file().get_basename() + "_attack.png"
+			eattack_tex = UIH.try_tex(eattack_art)
+		_enemy_pose_tex.append({"idle": etex, "attack": eattack_tex if eattack_tex else etex, "hurt": etex})
 		# flat red target ring on the GROUND under the selected enemy's feet
 		# (created before the sprite so it draws underneath)
 		var ring := TextureRect.new()
