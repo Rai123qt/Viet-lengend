@@ -2068,36 +2068,42 @@ func _build_pause_btn() -> void:
 ## Left: large circular avatar (brass frame). Middle: HP/Gold (top), 3 item slots (bottom).
 ## Right: weapon compartment (divider + axe slot + durability + EQUIP).
 func _build_top_bar() -> void:
-	var ox := 14.0
-	var oy := 10.0
-	var plaque_w := 520.0
-	var plaque_h := 128.0
+	# v6.9.4: smaller, repositioned to avoid TURN banner (Rai feedback)
+	var ox := 12.0
+	var oy := 52.0  # moved down from 10 to clear TURN banner
+	var plaque_w := 460.0  # shrunk from 520
+	var plaque_h := 110.0  # shrunk from 128
 	
 	# --- Main wooden plaque ---
+	# v6.9.4: Code-drawn wood (texture was stretched/ugly)
+	# Antique dark wood with visible grain lines
 	var plaque := PanelContainer.new()
-	var psb := StyleBoxTexture.new()
-	var wood_tex := UIH.try_tex("res://assets/art/vl3/btn-wood-plaque.png")
-	if wood_tex:
-		psb.texture = wood_tex
-	else:
-		# Fallback to flat color if texture missing
-		var flat := StyleBoxFlat.new()
-		flat.bg_color = Color(0.35, 0.24, 0.14, 0.96)
-		flat.border_color = Color(0.72, 0.58, 0.32)
-		flat.set_border_width_all(3)
-		flat.set_corner_radius_all(10)
-		plaque.add_theme_stylebox_override("panel", flat)
-	if wood_tex:
-		plaque.add_theme_stylebox_override("panel", psb)
-	# Content margins
-	plaque.add_theme_constant_override("separation", 0)
-	# Note: StyleBoxTexture doesn't have content margins, so we wrap in margin
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.32, 0.21, 0.12, 0.97)  # warm dark wood
+	psb.border_color = Color(0.78, 0.62, 0.34)  # bright brass
+	psb.set_border_width_all(3)
+	psb.set_corner_radius_all(8)
+	# Subtle inner highlight for depth
+	psb.shadow_color = Color(0.15, 0.08, 0.03, 0.6)
+	psb.shadow_size = 6
+	psb.shadow_offset = Vector2(0, 3)
+	plaque.add_theme_stylebox_override("panel", psb)
 	plaque.position = Vector2(ox, oy)
 	plaque.custom_minimum_size = Vector2(plaque_w, plaque_h)
 	plaque.size = Vector2(plaque_w, plaque_h)
 	plaque.z_index = 50
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(plaque)
+	
+	# Wood grain lines (thin horizontal, subtle)
+	for gy in [0.25, 0.5, 0.75]:
+		var grain := ColorRect.new()
+		grain.color = Color(0.25, 0.16, 0.09, 0.5)
+		grain.position = Vector2(ox + 8, oy + plaque_h * gy)
+		grain.size = Vector2(plaque_w - 16, 1.5)
+		grain.z_index = 51
+		grain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(grain)
 	
 	# Inner margin container
 	var margin := MarginContainer.new()
@@ -2129,7 +2135,7 @@ func _build_top_bar() -> void:
 	margin.add_child(hb)
 	
 	# --- LEFT: Avatar (large, brass engraved frame) ---
-	var avatar_sz := 100.0
+	var avatar_sz := 84.0  # v6.9.4: smaller for compact plaque
 	var hero_art := "res://assets/art/vl2/hero_thachsanh.png"
 	if Game.hero_id == "hai_ba_trung":
 		hero_art = "res://assets/art/vl/hero_haibatrung_battle.png"
