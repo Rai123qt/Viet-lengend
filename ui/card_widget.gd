@@ -32,11 +32,12 @@ static func frame_tex(ctype: String) -> Texture2D:
 static var _face_tex := {}
 
 static func face_tex(card_id: String) -> Texture2D:
-	# v5.6: don't cache null — retry on next call (Rai: upgraded cards lost art)
+	# v6.9.14: simplified - Rai: upgrade giữ nguyên art, chỉ thêm + vào tên
+	# Removed ResourceLoader.exists check (may fail on Android)
 	if _face_tex.has(card_id) and _face_tex[card_id] != null:
 		return _face_tex[card_id]
-	var p := "res://assets/art/vl3/cards/%s.webp" % card_id
-	var tex: Texture2D = load(p) if ResourceLoader.exists(p) else null
+	var p := "res://assets/art/vl3/cards/%s.webp" % card_id.strip_edges()
+	var tex: Texture2D = load(p)
 	if tex != null:
 		_face_tex[card_id] = tex
 	return tex
