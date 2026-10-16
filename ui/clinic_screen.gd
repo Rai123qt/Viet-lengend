@@ -34,8 +34,18 @@ func _ready() -> void:
 
 
 func _upgrade() -> void:
-	UIH.choose_card_popup(self, "Upgrade a card", Game.deck,
-		func(i): if i >= 0: Game.upgrade_card_at(i); _done())
+	# v6.9.13: filter out already-upgraded cards (Rai: đã upgrade rồi thì thôi)
+	var upgradeable := []
+	var upgradeable_idx := []
+	for i in range(Game.deck.size()):
+		if not Game.deck[i].get("upgraded", false):
+			upgradeable.append(Game.deck[i])
+			upgradeable_idx.append(i)
+	if upgradeable.is_empty():
+		_done()
+		return
+	UIH.choose_card_popup(self, "Upgrade a card", upgradeable,
+		func(i): if i >= 0: Game.upgrade_card_at(upgradeable_idx[i]); _done())
 
 
 func _meditate() -> void:
